@@ -10,5 +10,6 @@ a factory, main class in game_factory.py, defines a wrapper that:
   - keeps a consistent vocabulary (perhaps across many games), so that game states can undertood across several games
   - keeps a consistent mapping into actions
   - TODO executes a curriculum
+
 For each new game it is assumed you will write the game (subclassing grid_game) and a factory (subclassing game_factory) 
 See game_factory.py for an example of how to build a factory with multiple games

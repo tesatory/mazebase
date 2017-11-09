@@ -38,16 +38,16 @@ class grid_item():
     #direct to_tensor()?
     def to_sentence(self):
         s = []
-        for i in attr:
+        for i in self.attr:
             if i == 'loc':
-                loc = attr[i]
+                loc = self.attr[i]
                 # it is up to the featurizer to implement egocentric coords!
                 s.append('loc_x'+str(loc[0])+'y'+str(loc[1]))
             elif i[0] != '_' :
                 if i[0] != '@':
                     s.append(i)
                 else:
-                    s.append(attr[i])
+                    s.append(self.attr[i])
         return s
 
     #TODO clone() and change_owner()

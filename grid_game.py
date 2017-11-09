@@ -158,6 +158,12 @@ class grid_game_2d():
     def act(self,action, agent = 0):
         self.items_bytype['agent'][agent].act(action)
 
+    def to_sentence(self):
+        s = []
+        for i in self.items:
+            s.append(i.to_sentence())
+        return s
+        
 
     def interactive_ascii(self):
         self.display_ascii()
@@ -168,9 +174,6 @@ class grid_game_2d():
                 self.agent.act(a)
             self.update()
             self.display_ascii()
-
-
-
 
     def display_ascii(self):
         width = self.mapsize[0]

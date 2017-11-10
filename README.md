@@ -13,3 +13,6 @@ a factory, main class in game_factory.py, defines a wrapper that:
 
 For each new game it is assumed you will write the game (subclassing grid_game) and a factory (subclassing game_factory) 
 See game_factory.py for an example of how to build a factory with multiple games
+
+
+Next step:  featurizers

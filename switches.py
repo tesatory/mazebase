@@ -55,6 +55,7 @@ class factory(gf.game_factory):
 
     def all_vocab(self, game_opts):
         vocab = []
+        vocab.append('info')
         vocab.append('obj0')
         vocab.append('switch')
         vocab.append('cycle_switch')

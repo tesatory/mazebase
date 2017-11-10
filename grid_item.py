@@ -153,6 +153,7 @@ class cycle_switch(grid_item):
         colors.append('on_white')
         return (u' S ', None, colors[self.color%8], None)
 
+
 def add_cycle_switch(game, loc, ncolors):
     attr = {'_type':'cycle_switch','_ncolors':ncolors,'loc':loc}
     switch = cycle_switch(attr)
@@ -167,7 +168,7 @@ def add_corners(game):
     game.build_add_item(attr, loc = (game.mapsize[0]-1,game.mapsize[1]-1))
 
 def build_info_attr(message):
-    attr = {'_type':'info'}
+    attr = {'_type':'info','@type':'info'}
     q = message.split()
     count = 0
     for i in q:
@@ -176,15 +177,22 @@ def build_info_attr(message):
     return attr
 
 
+def add_goal(game,loc,goal_id):
+    display_symbol = (u'*{0}*'.format(goal_id), 'red', None, None)
+    attr = {'_type':'goal','@type':'goal','@goal':('goal'+str(goal_id)),
+            '_display_symbol':display_symbol,'_reachable':True}
+    game.build_add_item(attr,loc)
+
+
 def add_block(game,loc):
     display_symbol = (None, None, 'on_white', None)
-    attr = {'_type':'block','block':0,'_display_symbol':display_symbol}
+    attr = {'_type':'block','@type':'block','_display_symbol':display_symbol}
     game.build_add_item(attr,loc)
 
 def add_water(game,loc):
     cost = game.opts.get('water_cost') or -.1
     display_symbol = (None, None, 'on_blue', None)
-    attr = {'_type':'water','water':0,'_touch_cost':cost,
+    attr = {'_type':'water','@type':'water','_touch_cost':cost,
             '_display_symbol':display_symbol,'_reachable':True}
     game.build_add_item(attr,loc)
 

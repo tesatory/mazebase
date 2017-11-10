@@ -6,28 +6,46 @@ import torch
 import random
 import grid_game as gg
 import grid_item as gi
+import standard_grid_actions
 import game_factory as gf
 
 class game(gg.grid_game_2d):
     def __init__(self, opts):
         super(game, self).__init__(opts)
-        l = self.get_empty_loc()
-        self.goal_loc = l
+        
+
+        self.ngoals = opts.get('ngoals') or 2
+        for i in range(self.ngoals):
+            l = self.get_empty_loc()
+            gi.add_goal(self,l, i)
+        self.ncolors = opts.get('ncolors') or 2
+        gi.add_random_cycle_switches(self, 1, self.ncolors)
+        self.cmap = []
+        for s in range(self.ncolors):
+            g = random.randint(0,self.ngoals - 1)
+            self.cmap.append(g)
+            info = gi.build_info_attr('if cycle_switch color ' + 'color' + str(s) + ' go goal' + str(g))
+            self.build_add_item(info)
+
         self.nblocks = int(opts.get('nblocks') or 0)
         self.nwater = int(opts.get('nwater') or 0)
-        destination = 'ax' + str(l[0])+'y'+str(l[1])
-        info = gi.build_info_attr('obj0 go absolute ' + destination)
-        self.build_add_item(info)
         gi.add_standard_items(self)
         self.agent = self.items_bytype['agent'][0]
+        self.agent.replace_action('toggle_close',
+                                  standard_grid_actions.toggle_close)
         self.finished = False
 
     def update(self):
         super(game, self).update()
-        l = self.goal_loc
-        if self.agent.attr['loc'][0] == l[0] and self.agent.attr['loc'][0] == l[0]:
-            self.finished = True
-
+        self.finished = False
+        items = self.items_byloc[self.agent.attr['loc']]
+        c = self.items_bytype['cycle_switch'][0].color
+        g = self.cmap[c]
+        for i in items:
+            gname = i.attr.get('@goal')
+            if gname is not None:  
+                if int(gname[4:]) == g:
+                    self.finished = True
 
     def get_reward(self):
         r = self.opts['step_cost']
@@ -40,18 +58,23 @@ class factory(gf.game_factory):
 
     def all_vocab(self, game_opts):
         vocab = []
+        vocab.append('if')
         vocab.append('info')
-        vocab.append('obj0')
         vocab.append('go')
-        vocab.append('absolute')
+        vocab.append('cycle_switch')
+        vocab.append('color')
         vocab.append('block')
         vocab.append('water')
         vocab.append('agent')
         vocab.append('agent0')
+        for s in range(game_opts['range']['ncolors'][3]):
+            vocab.append('color' + str(s))
+        for s in range(game_opts['range']['ngoals'][3]):
+            vocab.append('goal' + str(s))
         for s in range(game_opts['range']['map_width'][3]):
             for t in range(game_opts['range']['map_height'][3]):
-                vocab.append('ax' + str(s)+'x'+str(t))
                 vocab.append('loc_x' + str(s)+'x'+str(t))
+
         return vocab
 
     def all_actions(self, game_opts):
@@ -60,11 +83,13 @@ class factory(gf.game_factory):
         actions.append('down')
         actions.append('left')
         actions.append('right')
+        actions.append('toggle_close')
         actions.append('stop')
         return actions
 
+
 if  __name__ == '__main__':
     opts = {'map_width':10,'map_height':10,
-            'step_cost':-.1,'nblocks':3,
-            'nwater':3}
+            'step_cost':-.1,'water_cost':-.1, 'nblocks':3,
+            'nwater':3,'ngoals':5, 'ncolors':3}
     g = game(opts)

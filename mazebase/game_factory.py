@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 from __future__ import print_function
+
 import random
 
 #featurizer implements egocentric vs absolute coords
@@ -10,6 +11,7 @@ import random
 
 #todo curriculum
 #todo save and load vocab and action lists
+
 
 def generate_opts(gopts):
     opts = {}

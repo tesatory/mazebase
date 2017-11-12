@@ -2,17 +2,18 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 from __future__ import print_function
-import torch
+
 import random
-import grid_game as gg
-import grid_item as gi
-import standard_grid_actions
-import game_factory as gf
+
+import mazebase.grid_game as gg
+import mazebase.grid_item as gi
+import mazebase.standard_grid_actions
+import mazebase.game_factory as gf
+
 
 class game(gg.grid_game_2d):
     def __init__(self, opts):
         super(game, self).__init__(opts)
-        
 
         self.ngoals = opts.get('ngoals') or 2
         for i in range(self.ngoals):

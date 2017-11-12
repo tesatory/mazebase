@@ -2,12 +2,14 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 from __future__ import print_function
-import torch
+
 import random
-import grid_game as gg
-import grid_item as gi
-import standard_grid_actions
-import game_factory as gf
+
+import mazebase.standard_grid_actions
+import mazebase.grid_game as gg
+import mazebase.grid_item as gi
+import mazebase.game_factory as gf
+
 
 class game(gg.grid_game_2d):
     def __init__(self, opts):

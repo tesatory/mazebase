@@ -1,6 +1,17 @@
 # mazebase
 
-Basic architecture:   
+
+## Installation
+
+```bash
+$ pip install -e .
+```
+
+
+## Design
+
+Basic architecture:
+
 - the main game class is in grid_game.py
 - two example games in switches.py and goto.py
 - game states are described via the attributes of the items in the game.

@@ -5,7 +5,7 @@ from __future__ import print_function
 import random
 import grid_item as gi
 import os
-from termcolor import cprint
+from util.termcolor import cprint
 
 
 

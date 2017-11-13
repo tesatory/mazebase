@@ -18,14 +18,15 @@ class Game(gg.GridGame2D):
         self.ngoals = opts.get('ngoals') or 2
         for i in range(self.ngoals):
             l = self.get_empty_loc()
-            gi.add_goal(self,l, i)
+            gi.add_goal(self, l, i)
         self.ncolors = opts.get('ncolors') or 2
         gi.add_random_cycle_switches(self, 1, self.ncolors)
         self.cmap = []
         for s in range(self.ncolors):
-            g = random.randint(0,self.ngoals - 1)
+            g = random.randint(0, self.ngoals - 1)
             self.cmap.append(g)
-            info = gi.build_info_attr('if cycle_switch color ' + 'color' + str(s) + ' go goal' + str(g))
+            info = gi.build_info_attr('if cycle_switch color ' + 'color' +
+                                      str(s) + ' go goal' + str(g))
             self.build_add_item(info)
 
         self.nblocks = int(opts.get('nblocks') or 0)
@@ -44,7 +45,7 @@ class Game(gg.GridGame2D):
         g = self.cmap[c]
         for i in items:
             gname = i.attr.get('@goal')
-            if gname is not None:  
+            if gname is not None:
                 if int(gname[4:]) == g:
                     self.finished = True
 
@@ -75,7 +76,7 @@ class Factory(gf.GameFactory):
             vocab.append('goal' + str(s))
         for s in range(game_opts['range']['map_width'][3]):
             for t in range(game_opts['range']['map_height'][3]):
-                vocab.append('loc_x' + str(s)+'x'+str(t))
+                vocab.append('loc_x' + str(s) + 'x' + str(t))
 
         return vocab
 
@@ -90,8 +91,15 @@ class Factory(gf.GameFactory):
         return actions
 
 
-if  __name__ == '__main__':
-    opts = {'map_width':10,'map_height':10,
-            'step_cost':-.1,'water_cost':-.1, 'nblocks':3,
-            'nwater':3,'ngoals':5, 'ncolors':3}
+if __name__ == '__main__':
+    opts = {
+        'map_width': 10,
+        'map_height': 10,
+        'step_cost': -.1,
+        'water_cost': -.1,
+        'nblocks': 3,
+        'nwater': 3,
+        'ngoals': 5,
+        'ncolors': 3
+    }
     g = Game(opts)

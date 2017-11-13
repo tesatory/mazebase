@@ -24,17 +24,18 @@ class Game(gg.GridGame2D):
         b = random.choice(self.items_bytype['block'])
         loc = b.attr['loc']
         self.remove_item(b)
-        s = gi.pushable_block({'loc':loc})
+        s = gi.pushable_block({'loc': loc})
         self.add_prebuilt_item(s)
-        gi.add_random_cycle_switches(self,self.nswitches,self.ncolors)
-        #always goal0.  fixme?
-        gi.add_goal(self,self.get_empty_loc(), 0)
+        gi.add_random_cycle_switches(self, self.nswitches, self.ncolors)
+        # always goal0.  fixme?
+        gi.add_goal(self, self.get_empty_loc(), 0)
         gi.add_standard_items(self)
         self.agent = self.items_bytype['agent'][0]
-        self.agent.replace_action('push_up',standard_grid_actions.push_up)
-        self.agent.replace_action('push_down',standard_grid_actions.push_down)
-        self.agent.replace_action('push_left',standard_grid_actions.push_left)
-        self.agent.replace_action('push_right',standard_grid_actions.push_right)
+        self.agent.replace_action('push_up', standard_grid_actions.push_up)
+        self.agent.replace_action('push_down', standard_grid_actions.push_down)
+        self.agent.replace_action('push_left', standard_grid_actions.push_left)
+        self.agent.replace_action('push_right',
+                                  standard_grid_actions.push_right)
         self.finished = False
 
     def update(self):
@@ -43,7 +44,7 @@ class Game(gg.GridGame2D):
         items = self.items_byloc[self.agent.attr['loc']]
         for i in items:
             gname = i.attr.get('@goal')
-            if gname is not None:  
+            if gname is not None:
                 self.finished = True
 
     def get_reward(self):
@@ -72,7 +73,7 @@ class Factory(gf.GameFactory):
             vocab.append('color' + str(s))
         for s in range(game_opts['range']['map_width'][3]):
             for t in range(game_opts['range']['map_height'][3]):
-                vocab.append('loc_x' + str(s)+'x'+str(t))
+                vocab.append('loc_x' + str(s) + 'x' + str(t))
 
         return vocab
 
@@ -90,9 +91,14 @@ class Factory(gf.GameFactory):
         return actions
 
 
-if  __name__ == '__main__':
-    opts = {'map_width':12,'map_height':12,
-            'step_cost':-.1,'water_cost':-.1, 'nblocks':3,
-            'nwater':3}
+if __name__ == '__main__':
+    opts = {
+        'map_width': 12,
+        'map_height': 12,
+        'step_cost': -.1,
+        'water_cost': -.1,
+        'nblocks': 3,
+        'nwater': 3
+    }
     g = Game(opts)
     g.interactive_ascii()

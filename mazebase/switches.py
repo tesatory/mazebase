@@ -22,15 +22,15 @@ class Game(gg.GridGame2D):
         self.nswitches = opts.get('nswitches') or 2
         self.ncolors = opts.get('ncolors') or 2
         if self.explicit:
-            self.target_color = random.randint(0,self.ncolors)
-            tcs = 'color'+ str(self.target_color)
+            self.target_color = random.randint(0, self.ncolors)
+            tcs = 'color' + str(self.target_color)
         else:
             self.target_color = -1
             tcs = 'same'
 
         info = gi.build_info_attr('obj0 switch color ' + tcs)
         self.build_add_item(info)
-        gi.add_random_cycle_switches(self,self.nswitches,self.ncolors)
+        gi.add_random_cycle_switches(self, self.nswitches, self.ncolors)
         gi.add_standard_items(self)
         self.agent = self.items_bytype['agent'][0]
         self.agent.replace_action('toggle_close',
@@ -72,7 +72,7 @@ class Factory(gf.GameFactory):
             vocab.append('color' + str(s))
         for s in range(game_opts['range']['map_width'][3]):
             for t in range(game_opts['range']['map_height'][3]):
-                vocab.append('loc_x' + str(s)+'x'+str(t))
+                vocab.append('loc_x' + str(s) + 'x' + str(t))
 
         return vocab
 
@@ -87,8 +87,13 @@ class Factory(gf.GameFactory):
         return actions
 
 
-if  __name__ == '__main__':
-    opts = {'map_width':10,'map_height':10,
-            'step_cost':-.1,'water_cost':-.1, 'nblocks':3,
-            'nwater':3}
+if __name__ == '__main__':
+    opts = {
+        'map_width': 10,
+        'map_height': 10,
+        'step_cost': -.1,
+        'water_cost': -.1,
+        'nblocks': 3,
+        'nwater': 3
+    }
     g = Game(opts)

@@ -15,7 +15,7 @@ class Game(gg.GridGame2D):
         self.goal_loc = l
         self.nblocks = int(opts.get('nblocks') or 0)
         self.nwater = int(opts.get('nwater') or 0)
-        destination = 'ax' + str(l[0])+'y'+str(l[1])
+        destination = 'ax' + str(l[0]) + 'y' + str(l[1])
         info = gi.build_info_attr('obj0 go absolute ' + destination)
         self.build_add_item(info)
         gi.add_standard_items(self)
@@ -25,9 +25,9 @@ class Game(gg.GridGame2D):
     def update(self):
         super(Game, self).update()
         l = self.goal_loc
-        if self.agent.attr['loc'][0] == l[0] and self.agent.attr['loc'][0] == l[0]:
+        if (self.agent.attr['loc'][0] == l[0]
+                and self.agent.attr['loc'][0] == l[0]):
             self.finished = True
-
 
     def get_reward(self):
         r = self.opts['step_cost']
@@ -51,8 +51,8 @@ class Factory(gf.GameFactory):
         vocab.append('agent0')
         for s in range(game_opts['range']['map_width'][3]):
             for t in range(game_opts['range']['map_height'][3]):
-                vocab.append('ax' + str(s)+'x'+str(t))
-                vocab.append('loc_x' + str(s)+'x'+str(t))
+                vocab.append('ax' + str(s) + 'x' + str(t))
+                vocab.append('loc_x' + str(s) + 'x' + str(t))
         return vocab
 
     def all_actions(self, game_opts):
@@ -64,8 +64,13 @@ class Factory(gf.GameFactory):
         actions.append('stop')
         return actions
 
-if  __name__ == '__main__':
-    opts = {'map_width':10,'map_height':10,
-            'step_cost':-.1,'nblocks':3,
-            'nwater':3}
+
+if __name__ == '__main__':
+    opts = {
+        'map_width': 10,
+        'map_height': 10,
+        'step_cost': -.1,
+        'nblocks': 3,
+        'nwater': 3
+    }
     g = Game(opts)

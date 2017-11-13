@@ -6,14 +6,33 @@ import types
 import random
 import standard_grid_actions
 
+_on_colors = []
+_on_colors.append('on_grey')
+_on_colors.append('on_red')
+_on_colors.append('on_green')
+_on_colors.append('on_yellow')
+_on_colors.append('on_blue')
+_on_colors.append('on_magenta')
+_on_colors.append('on_cyan')
+_on_colors.append('on_white')
+
+_colors = []
+_colors.append('grey')
+_colors.append('red')
+_colors.append('green')
+_colors.append('yellow')
+_colors.append('blue')
+_colors.append('magenta')
+_colors.append('cyan')
+_colors.append('white')
+
+
 # an item in its simplest form is defined
 # by the dictionary attr.
 # attr['loc'] if it exists gives the location
 #   of the item on the grid as a 2-tuple
 
-
-
-class grid_item():
+class grid_item(object):
     def __init__(self,attr):
         self.attr = attr
         #for visualization
@@ -52,7 +71,9 @@ class grid_item():
 
     #TODO clone() and change_owner()
 
-
+################################################################################
+#agent
+################################################################################
 
 class grid_agent(grid_item):
     def __init__(self, attr, actions = None):
@@ -101,10 +122,6 @@ class grid_agent(grid_item):
     def _get_display_symbol(self):
         return (u' A ', None, None, None)
 
-
-
-
-
 def add_agent(game,name = None, actions = None):
     if name is None:
         agents = game.items_bytype.get('agent')
@@ -121,10 +138,9 @@ def add_agent(game,name = None, actions = None):
     e.game = game
     game.add_prebuilt_item(e)
 
-
-
-
-
+################################################################################
+#cycle switch
+################################################################################
 #todo switches with visible number of states?
 class cycle_switch(grid_item):
     def __init__(self,attr):
@@ -151,13 +167,57 @@ class cycle_switch(grid_item):
         colors.append('on_magenta')
         colors.append('on_cyan')
         colors.append('on_white')
-        return (u' S ', None, colors[self.color%8], None)
+        return (u' S ', None, _on_colors[self.color%8], None)
 
 
 def add_cycle_switch(game, loc, ncolors):
     attr = {'_type':'cycle_switch','_ncolors':ncolors,'loc':loc}
     switch = cycle_switch(attr)
     game.add_prebuilt_item(switch)
+
+
+################################################################################
+#pushable block
+################################################################################
+class pushable_block(grid_item):
+    def __init__(self,attr):
+        super(pushable_block, self).__init__(attr)
+        self.attr['_type'] = 'pushable_block'
+        self.attr['@type'] = 'pushable_block'
+        self.attr['_pushable'] = True
+        self.attr['_reachable'] = False
+    def _get_display_symbol(self):
+        return (u'   ', None, 'on_green', None)
+
+################################################################################
+#cycle_switch_opened_door
+################################################################################
+#todo door superclass?
+class cycle_switch_opened_door(grid_item):
+    def __init__(self,attr, color = 0):
+        super(cycle_switch_opened_door, self).__init__(attr)
+        self.attr['_type'] = 'cycle_switch_opened_door'
+        self.attr['@type'] = 'cycle_switch_opened_door'
+        self.attr['@color'] = 'color' + str(color)
+        self.attr['_reachable'] = False
+        self.color = color
+        self.isopen = False
+    def setc(self, c):
+        self.color = c
+        self.attr['@color'] = 'color' + str(c)        
+    def update(self, game):
+        self.isopen = True
+        self.attr['_reachable'] = True
+        for i in game.items_bytype['cycle_switch']:
+            if self.color != i.color:
+                self.isopen = False
+                self.attr['_reachable'] = False
+    def _get_display_symbol(self):
+#        c = "\x1b[1;%dm" % (30 + self.color%8) + '0' + "\x1b[0m"
+        if self.isopen:
+            return ('   ', None, None, None)
+        else:
+            return (' 0 ', _colors[self.color%8], 'on_white', ['bold'])
 
 
 def add_corners(game):
@@ -216,3 +276,21 @@ def add_standard_items(game):
     add_random_blocks(game, game.nblocks)
     add_random_water(game, game.nwater)
     add_agent(game)
+
+# probably should do this before doing anything else...
+def build_big_random_wall(game, orientation = 'random'):
+    if orientation == 'random':
+        orientation = 'vertical'
+        if random.random()>.5:
+            orientation = 'horizontal'
+    if orientation == 'vertical':
+        w = random.randint(2,game.mapsize[0]-2)
+        for h in range(game.mapsize[1]):
+            add_block(game,(w,h))
+    else:
+        h = random.randint(2,game.mapsize[1]-2)
+        for w in range(game.mapsize[0]):
+            add_block(game,(w,h))
+
+
+

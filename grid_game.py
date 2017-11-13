@@ -9,6 +9,15 @@ from termcolor import cprint
 
 
 
+def format_number(s):
+    if s<10:
+        ss = ' ' + str(s)  + ' '
+    elif s<100:   
+        ss = ' ' + str(s)
+    else:
+        ss = str(s)
+    return ss
+         
 #the factory collects the vocab...
 #the factory holds the featurizer
 #the factory holds the mapping from indices to actions
@@ -164,7 +173,6 @@ class grid_game_2d():
             s.append(i.to_sentence())
         return s
         
-
     def interactive_ascii(self):
         self.display_ascii()
         while self.is_active():
@@ -174,6 +182,7 @@ class grid_game_2d():
                 self.agent.act(a)
             self.update()
             self.display_ascii()
+            print(self.get_reward())
 
     def display_ascii(self):
         width = self.mapsize[0]
@@ -185,7 +194,7 @@ class grid_game_2d():
             print(' '.join(swords))
         cprint(' ' * (width + 2) * 3, None, 'on_white')
         for y in reversed(range(height)):
-            cprint('   ', None, 'on_white', end="")
+            cprint(format_number(y), 'red', 'on_white', end ="")
             for x in range(width):
                 items = self.items_byloc.get((x,y))
                 disp = [u'   ', None, None, None]
@@ -208,5 +217,7 @@ class grid_game_2d():
                 text, color, bg, attrs = disp
                 cprint(text, color, bg, attrs, end="")
             cprint('   ', None, 'on_white')
-        cprint(' ' * (width + 2) * 3, None, 'on_white')
-        print(self.get_reward())
+        cprint('   ', None, 'on_white',end ="")
+        for s in range(width):
+            cprint(format_number(s), 'red', 'on_white', end ="")
+        cprint('   ', None, 'on_white')

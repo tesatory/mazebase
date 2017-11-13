@@ -3,9 +3,6 @@ from __future__ import division
 from __future__ import unicode_literals
 from __future__ import print_function
 
-import types
-import random
-
 
 def up(agent):
     w = agent.attr['loc'][0]

@@ -14,8 +14,7 @@ import mazebase.game_factory as gf
 class Game(gg.GridGame2D):
     def __init__(self, opts):
         super(Game, self).__init__(opts)
-        l = self.get_empty_loc()
-        self.goal_loc = l
+        self.goal_loc = self.get_empty_loc()
         self.nblocks = int(opts.get('nblocks') or 0)
         self.nwater = int(opts.get('nwater') or 0)
         self.explicit = opts.get('explicit') or False

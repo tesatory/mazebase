@@ -3,7 +3,6 @@ from __future__ import division
 from __future__ import unicode_literals
 from __future__ import print_function
 
-import types
 import random
 
 import mazebase.standard_grid_actions as standard_grid_actions

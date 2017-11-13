@@ -17,8 +17,7 @@ class Game(gg.GridGame2D):
 
         self.ngoals = opts.get('ngoals') or 2
         for i in range(self.ngoals):
-            l = self.get_empty_loc()
-            gi.add_goal(self, l, i)
+            gi.add_goal(self, self.get_empty_loc(), i)
         self.ncolors = opts.get('ncolors') or 2
         gi.add_random_cycle_switches(self, 1, self.ncolors)
         self.cmap = []

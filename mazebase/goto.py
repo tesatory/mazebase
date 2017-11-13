@@ -11,11 +11,11 @@ import mazebase.game_factory as gf
 class Game(gg.GridGame2D):
     def __init__(self, opts):
         super(Game, self).__init__(opts)
-        l = self.get_empty_loc()
-        self.goal_loc = l
+        self.goal_loc = self.get_empty_loc()
         self.nblocks = int(opts.get('nblocks') or 0)
         self.nwater = int(opts.get('nwater') or 0)
-        destination = 'ax' + str(l[0]) + 'y' + str(l[1])
+        destination = (
+            'ax' + str(self.goal_loc[0]) + 'y' + str(self.goal_loc[1]))
         info = gi.build_info_attr('obj0 go absolute ' + destination)
         self.build_add_item(info)
         gi.add_standard_items(self)
@@ -24,9 +24,9 @@ class Game(gg.GridGame2D):
 
     def update(self):
         super(Game, self).update()
-        l = self.goal_loc
-        if (self.agent.attr['loc'][0] == l[0]
-                and self.agent.attr['loc'][0] == l[0]):
+        location = self.goal_loc
+        if (self.agent.attr['loc'][0] == location[0]
+                and self.agent.attr['loc'][0] == location[0]):
             self.finished = True
 
     def get_reward(self):

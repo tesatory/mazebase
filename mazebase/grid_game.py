@@ -29,58 +29,36 @@ class GridGame2D():
         self.finished = False
         self.agent = None
 
-    def is_loc_reachable(self, loc):
-        if loc[0] < 0 or loc[1] < 0:
-            return False
-        if loc[0] >= self.mapsize[0] or loc[0] >= self.mapsize[1]:
-            return False
-        reachable = True
-        loc_items = self.items_byloc.get(loc)
-        if loc_items is not None:
-            for i in loc_items:
-                reachable = reachable and i.is_reachable()
-        return reachable
-
-#    def is_loc_visible(loc):
 
     def random_loc(self, fat):
         x = random.randint(fat, self.mapsize[0] - fat - 1)
         y = random.randint(fat, self.mapsize[1] - fat - 1)
         return (x, y)
 
+    def is_loc_reachable(self, loc):
+        x, y = loc
+        if (x < 0 or y < 0 or x >= self.mapsize[0] or y >= self.mapsize[1]):
+            return False
+        loc_items = self.items_byloc.get(loc, [])
+        return all(i.is_reachable() for i in loc_items)
 
-# TODO merge these
+    def is_loc_empty(self, loc):
+        x, y = loc
+        loc_items = self.items_byloc.get(loc, [])
+        return all(i.attr.get('_immaterial') for i in loc_items)
 
-    def get_reachable_loc(self, fat=0):
+    def get_reachable_loc(self, fat=0, ensure_empty=False):
         for i in range(100):
             loc = self.random_loc(fat)
-            reachable = True
-            items = self.items_byloc.get(loc)
-            if items is not None:
-                for i in items:
-                    reachable = reachable and i.is_reachable()
-            if reachable:
-                return loc
+            if self.is_loc_reachable(loc):
+                if not ensure_empty:
+                    return loc
+                if self.is_loc_empty(loc):
+                    return loc
         raise RuntimeError(
             "Failed to find reachable location after 100 tries! Your map"
             "size is probably too small")
 
-    def get_empty_loc(self, fat=0):
-        for i in range(100):
-            loc = self.random_loc(fat)
-            empty = True
-            items = self.items_byloc.get(loc)
-            if items is not None:
-                for i in items:
-                    if not i.attr.get('_immaterial'):
-                        empty = False
-            if empty:
-                return loc
-
-        raise RuntimeError(
-            "Failed to find empty location after 100 tries! Your map"
-            "size is probably too small")
-    
     # Do not change attr['_type'] by hand.  always use:
     def retype_item(self, item, newtype):
         # TODO clean up len 0 lists?
@@ -91,7 +69,7 @@ class GridGame2D():
         if self.items_bytype.get(newtype) is None:
             self.items_bytype[newtype] = []
         self.items_bytype[newtype].append(item)
-        
+
     # Do not change attr['loc'] by hand.  always use:
     def move_item(self, item, loc):
         # TODO error if target loc is outside of map
@@ -111,12 +89,12 @@ class GridGame2D():
     def rename_item(self, item, newname):
         # TODO clean up len 0 lists?
         assert (item in self.items)
-        assert(self.items_byname.get(newname)) is None
+        assert (self.items_byname.get(newname)) is None
         oldname = item.attr.get('_name')
-        if oldname is not None:                
+        if oldname is not None:
             item.attr['_name'] = newname
             self.items_byname.remove(item)
-        self.items_byname[newname] = item 
+        self.items_byname[newname] = item
 
     def remove_item(self, item):
         assert (item in self.items)
@@ -149,7 +127,7 @@ class GridGame2D():
 
     def build_add_item(self, attr, loc=''):
         if loc == 'random_empty':
-            attr['loc'] = self.get_empty_loc()
+            attr['loc'] = self.get_reachable_loc(ensure_empty=True)
         elif loc == 'random_reachable':
             attr['loc'] = self.get_reachable_loc()
         elif loc == 'random':

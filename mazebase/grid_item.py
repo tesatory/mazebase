@@ -290,19 +290,19 @@ def add_water(game, loc):
 
 def add_random_cycle_switches(game, nswitches, ncolors):
     for i in range(nswitches):
-        loc = game.get_empty_loc()
+        loc = game.get_reachable_loc(ensure_empty=True)
         add_cycle_switch(game, loc, ncolors)
 
 
 def add_random_blocks(game, nblocks):
     for i in range(nblocks):
-        loc = game.get_empty_loc()
+        loc = game.get_reachable_loc(ensure_empty=True)
         add_block(game, loc)
 
 
 def add_random_water(game, nwater):
     for i in range(nwater):
-        loc = game.get_empty_loc()
+        loc = game.get_reachable_loc(ensure_empty=True)
         add_water(game, loc)
 
 

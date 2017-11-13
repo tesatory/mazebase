@@ -28,7 +28,7 @@ class Game(gg.GridGame2D):
         self.add_prebuilt_item(s)
         gi.add_random_cycle_switches(self, self.nswitches, self.ncolors)
         # always goal0.  fixme?
-        gi.add_goal(self, self.get_empty_loc(), 0)
+        gi.add_goal(self, self.get_reachable_loc(ensure_empty=True), 0)
         gi.add_standard_items(self)
         self.agent = self.items_bytype['agent'][0]
         self.agent.replace_action('push_up', standard_grid_actions.push_up)

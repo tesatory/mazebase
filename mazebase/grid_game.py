@@ -10,16 +10,6 @@ import mazebase.grid_item as gi
 from util.termcolor import cprint
 
 
-def format_number(s):
-    if s < 10:
-        ss = ' ' + str(s) + ' '
-    elif s < 100:
-        ss = ' ' + str(s)
-    else:
-        ss = str(s)
-    return ss
-
-
 # the factory collects the vocab...
 # the factory holds the featurizer
 # the factory holds the mapping from indices to actions
@@ -201,7 +191,7 @@ class GridGame2D():
             print(' '.join(swords))
         cprint(' ' * (width + 2) * 3, None, 'on_white')
         for y in reversed(range(height)):
-            cprint(format_number(y), 'red', 'on_white', end="")
+            cprint(str(y).center(3), 'red', 'on_white', end="")
             for x in range(width):
                 items = self.items_byloc.get((x, y))
                 disp = [u'   ', None, None, None]
@@ -227,5 +217,5 @@ class GridGame2D():
             cprint('   ', None, 'on_white')
         cprint('   ', None, 'on_white', end="")
         for s in range(width):
-            cprint(format_number(s), 'red', 'on_white', end="")
+            cprint(str(s).center(3), 'red', 'on_white', end="")
         cprint('   ', None, 'on_white')

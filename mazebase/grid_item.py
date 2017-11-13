@@ -97,8 +97,8 @@ class GridAgent(GridItem):
             for i in actions:
                 self.replace_action(i, actions[i])
 
-        if self.game == None:
     def at_itemtype(self, itemtype):
+        if self.game is None:
             return False
         items = self.game.items_byloc(self.attr.loc)
         for i in items:
@@ -107,7 +107,7 @@ class GridAgent(GridItem):
 
     def touch_cost(self):
         c = 0
-        if self.game == None:
+        if self.game is None:
             return 0
         items = self.game.items_byloc[self.attr['loc']]
         for i in items:
@@ -131,7 +131,7 @@ class GridAgent(GridItem):
 def add_agent(game, name=None, actions=None):
     if name is None:
         agents = game.items_bytype.get('agent')
-        if agents == None:
+        if agents is None:
             n = 0
         else:
             n = len(agents)

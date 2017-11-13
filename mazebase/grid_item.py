@@ -2,15 +2,16 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 from __future__ import print_function
+
 import types
 import random
-import standard_grid_actions
+
+import mazebase.standard_grid_actions
 
 # an item in its simplest form is defined
 # by the dictionary attr.
 # attr['loc'] if it exists gives the location
 #   of the item on the grid as a 2-tuple
-
 
 
 class grid_item():

@@ -2,18 +2,19 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 from __future__ import print_function
+
 import random
-import grid_item as gi
 import os
-from termcolor import cprint
 
-
+import mazebase.grid_item as gi
+from util.termcolor import cprint
 
 #the factory collects the vocab...
 #the factory holds the featurizer
 #the factory holds the mapping from indices to actions
 #     common for all agents
 #TODO .step()
+
 
 class grid_game_2d():
     def __init__(self, opts):

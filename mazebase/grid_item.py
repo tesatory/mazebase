@@ -3,7 +3,6 @@ from __future__ import division
 from __future__ import unicode_literals
 from __future__ import print_function
 
-import types
 import random
 
 import mazebase.standard_grid_actions as standard_grid_actions
@@ -28,23 +27,24 @@ _colors.append('magenta')
 _colors.append('cyan')
 _colors.append('white')
 
-
 # an item in its simplest form is defined
 # by the dictionary attr.
 # attr['loc'] if it exists gives the location
 #   of the item on the grid as a 2-tuple
 
-class grid_item(object):
-    def __init__(self,attr):
+
+class GridItem(object):
+    def __init__(self, attr):
         self.attr = attr
-        #for visualization
+        # for visualization
         self.PRIO = 0
         self.drawme = True
 
     def is_reachable(self):
-        return self.attr.get('_reachable') or self.attr.get('_immaterial') or False
+        return self.attr.get('_reachable') or self.attr.get(
+            '_immaterial') or False
 
-    def update(self,game):
+    def update(self, game):
         pass
 
     def _get_display_symbol(self):
@@ -54,32 +54,34 @@ class grid_item(object):
         else:
             return (u'   ', None, None, None)
 
-    #todo more refined to_sentence()
-    #maybe attr classes with their own stringifiers?
-    #direct to_tensor()?
+    # todo more refined to_sentence()
+    # maybe attr classes with their own stringifiers?
+    # direct to_tensor()?
     def to_sentence(self):
         s = []
         for i in self.attr:
             if i == 'loc':
                 loc = self.attr[i]
                 # it is up to the featurizer to implement egocentric coords!
-                s.append('loc_x'+str(loc[0])+'y'+str(loc[1]))
-            elif i[0] != '_' :
+                s.append('loc_x' + str(loc[0]) + 'y' + str(loc[1]))
+            elif i[0] != '_':
                 if i[0] != '@':
                     s.append(i)
                 else:
                     s.append(self.attr[i])
         return s
 
-    #TODO clone() and change_owner()
+    # TODO clone() and change_owner()
 
-################################################################################
-#agent
-################################################################################
 
-class grid_agent(grid_item):
-    def __init__(self, attr, actions = None):
-        super(grid_agent, self).__init__(attr)
+# ###############################################################################
+# agent
+# ###############################################################################
+
+
+class GridAgent(GridItem):
+    def __init__(self, attr, actions=None):
+        super(GridAgent, self).__init__(attr)
         self.actions = {}
         self.game = None
         # actions = None gives default set of movement actions
@@ -94,8 +96,8 @@ class grid_agent(grid_item):
             for i in actions:
                 self.replace_action(i, actions[i])
 
-    def at_itemtype(self,itemtype):
-        if self.game == None:
+    def at_itemtype(self, itemtype):
+        if self.game is None:
             return False
         items = self.game.items_byloc(self.attr.loc)
         for i in items:
@@ -104,7 +106,7 @@ class grid_agent(grid_item):
 
     def touch_cost(self):
         c = 0
-        if self.game == None:
+        if self.game is None:
             return 0
         items = self.game.items_byloc[self.attr['loc']]
         for i in items:
@@ -112,7 +114,7 @@ class grid_agent(grid_item):
                 c += i.attr.get('_touch_cost')
         return c
 
-    def replace_action(self,name, action):
+    def replace_action(self, name, action):
         self.actions[name] = action.__get__(self)
 
     def act(self, action_name):
@@ -120,45 +122,49 @@ class grid_agent(grid_item):
         if a is not None:
             a()
 
-    #TODO symbol depends on agent id
+    # TODO symbol depends on agent id
     def _get_display_symbol(self):
         return (u' A ', None, None, None)
 
-def add_agent(game,name = None, actions = None):
+
+def add_agent(game, name=None, actions=None):
     if name is None:
         agents = game.items_bytype.get('agent')
-        if agents == None:
+        if agents is None:
             n = 0
         else:
             n = len(agents)
         name = 'agent' + str(n)
     loc = game.get_reachable_loc()
-    attr = {'_type':'agent', '@type':'agent',
-            '@name':name, '_name':name}
+    attr = {'_type': 'agent', '@type': 'agent', '@name': name, '_name': name}
     attr['loc'] = loc
-    e = grid_agent(attr, actions = actions)
+    e = GridAgent(attr, actions=actions)
     e.game = game
     game.add_prebuilt_item(e)
 
-################################################################################
-#cycle switch
-################################################################################
-#todo switches with visible number of states?
-class cycle_switch(grid_item):
-    def __init__(self,attr):
-        super(cycle_switch, self).__init__(attr)
-        assert(attr.get('_ncolors') is not None)
+
+# ###############################################################################
+# cycle switch
+# ###############################################################################
+# todo switches with visible number of states?
+class CycleSwitch(GridItem):
+    def __init__(self, attr):
+        super(CycleSwitch, self).__init__(attr)
+        assert (attr.get('_ncolors') is not None)
         self.ncolors = attr['_ncolors']
-        self.setc(random.randint(0,attr['_ncolors']-1))
+        self.setc(random.randint(0, attr['_ncolors'] - 1))
         self.attr['_type'] = 'cycle_switch'
         self.attr['@type'] = 'cycle_switch'
         self.attr['_reachable'] = True
+
     def toggle(self):
-        self.color = (self.color+1) % self.ncolors
+        self.color = (self.color + 1) % self.ncolors
         self.attr['@color'] = 'color' + str(self.color)
+
     def setc(self, color):
         self.color = color % self.ncolors
         self.attr['@color'] = 'color' + str(self.color)
+
     def _get_display_symbol(self):
         colors = []
         colors.append('on_grey')
@@ -169,44 +175,48 @@ class cycle_switch(grid_item):
         colors.append('on_magenta')
         colors.append('on_cyan')
         colors.append('on_white')
-        return (u' S ', None, _on_colors[self.color%8], None)
+        return (u' S ', None, _on_colors[self.color % 8], None)
 
 
 def add_cycle_switch(game, loc, ncolors):
-    attr = {'_type':'cycle_switch','_ncolors':ncolors,'loc':loc}
-    switch = cycle_switch(attr)
+    attr = {'_type': 'cycle_switch', '_ncolors': ncolors, 'loc': loc}
+    switch = CycleSwitch(attr)
     game.add_prebuilt_item(switch)
 
 
-################################################################################
-#pushable block
-################################################################################
-class pushable_block(grid_item):
-    def __init__(self,attr):
-        super(pushable_block, self).__init__(attr)
+# ###############################################################################
+# pushable block
+# ###############################################################################
+class PushableBlock(GridItem):
+    def __init__(self, attr):
+        super(PushableBlock, self).__init__(attr)
         self.attr['_type'] = 'pushable_block'
         self.attr['@type'] = 'pushable_block'
         self.attr['_pushable'] = True
         self.attr['_reachable'] = False
+
     def _get_display_symbol(self):
         return (u'   ', None, 'on_green', None)
 
-################################################################################
-#cycle_switch_opened_door
-################################################################################
-#todo door superclass?
-class cycle_switch_opened_door(grid_item):
-    def __init__(self,attr, color = 0):
-        super(cycle_switch_opened_door, self).__init__(attr)
+
+# ###############################################################################
+# cycle_switch_opened_door
+# ###############################################################################
+# todo door superclass?
+class CycleSwitchOpenedDoor(GridItem):
+    def __init__(self, attr, color=0):
+        super(CycleSwitchOpenedDoor, self).__init__(attr)
         self.attr['_type'] = 'cycle_switch_opened_door'
         self.attr['@type'] = 'cycle_switch_opened_door'
         self.attr['@color'] = 'color' + str(color)
         self.attr['_reachable'] = False
         self.color = color
         self.isopen = False
+
     def setc(self, c):
         self.color = c
-        self.attr['@color'] = 'color' + str(c)        
+        self.attr['@color'] = 'color' + str(c)
+
     def update(self, game):
         self.isopen = True
         self.attr['_reachable'] = True
@@ -214,23 +224,25 @@ class cycle_switch_opened_door(grid_item):
             if self.color != i.color:
                 self.isopen = False
                 self.attr['_reachable'] = False
+
     def _get_display_symbol(self):
-#        c = "\x1b[1;%dm" % (30 + self.color%8) + '0' + "\x1b[0m"
+        #        c = "\x1b[1;%dm" % (30 + self.color%8) + '0' + "\x1b[0m"
         if self.isopen:
             return ('   ', None, None, None)
         else:
-            return (' 0 ', _colors[self.color%8], 'on_white', ['bold'])
+            return (' 0 ', _colors[self.color % 8], 'on_white', ['bold'])
 
 
 def add_corners(game):
-    attr = {'_type':'corner','_immaterial':True,'corner':0}
-    game.build_add_item(attr, loc = (0,0))
-    game.build_add_item(attr, loc = (0,game.mapsize[1]-1))
-    game.build_add_item(attr, loc = (game.mapsize[0]-1,0))
-    game.build_add_item(attr, loc = (game.mapsize[0]-1,game.mapsize[1]-1))
+    attr = {'_type': 'corner', '_immaterial': True, 'corner': 0}
+    game.build_add_item(attr, loc=(0, 0))
+    game.build_add_item(attr, loc=(0, game.mapsize[1] - 1))
+    game.build_add_item(attr, loc=(game.mapsize[0] - 1, 0))
+    game.build_add_item(attr, loc=(game.mapsize[0] - 1, game.mapsize[1] - 1))
+
 
 def build_info_attr(message):
-    attr = {'_type':'info','@type':'info'}
+    attr = {'_type': 'info', '@type': 'info'}
     q = message.split()
     count = 0
     for i in q:
@@ -239,39 +251,58 @@ def build_info_attr(message):
     return attr
 
 
-def add_goal(game,loc,goal_id):
+def add_goal(game, loc, goal_id):
     display_symbol = (u'*{0}*'.format(goal_id), 'red', None, None)
-    attr = {'_type':'goal','@type':'goal','@goal':('goal'+str(goal_id)),
-            '_display_symbol':display_symbol,'_reachable':True}
-    game.build_add_item(attr,loc)
+    attr = {
+        '_type': 'goal',
+        '@type': 'goal',
+        '@goal': ('goal' + str(goal_id)),
+        '_display_symbol': display_symbol,
+        '_reachable': True
+    }
+    game.build_add_item(attr, loc)
 
 
-def add_block(game,loc):
+def add_block(game, loc):
     display_symbol = (None, None, 'on_white', None)
-    attr = {'_type':'block','@type':'block','_display_symbol':display_symbol}
-    game.build_add_item(attr,loc)
+    attr = {
+        '_type': 'block',
+        '@type': 'block',
+        '_display_symbol': display_symbol
+    }
+    game.build_add_item(attr, loc)
 
-def add_water(game,loc):
+
+def add_water(game, loc):
     cost = game.opts.get('water_cost') or -.1
     display_symbol = (None, None, 'on_blue', None)
-    attr = {'_type':'water','@type':'water','_touch_cost':cost,
-            '_display_symbol':display_symbol,'_reachable':True}
-    game.build_add_item(attr,loc)
+    attr = {
+        '_type': 'water',
+        '@type': 'water',
+        '_touch_cost': cost,
+        '_display_symbol': display_symbol,
+        '_reachable': True
+    }
+    game.build_add_item(attr, loc)
 
-def add_random_cycle_switches(game,nswitches,ncolors):
+
+def add_random_cycle_switches(game, nswitches, ncolors):
     for i in range(nswitches):
         loc = game.get_empty_loc()
-        add_cycle_switch(game,loc,ncolors)
+        add_cycle_switch(game, loc, ncolors)
 
-def add_random_blocks(game,nblocks):
+
+def add_random_blocks(game, nblocks):
     for i in range(nblocks):
         loc = game.get_empty_loc()
-        add_block(game,loc)
+        add_block(game, loc)
 
-def add_random_water(game,nwater):
+
+def add_random_water(game, nwater):
     for i in range(nwater):
         loc = game.get_empty_loc()
-        add_water(game,loc)
+        add_water(game, loc)
+
 
 def add_standard_items(game):
     add_corners(game)
@@ -279,20 +310,18 @@ def add_standard_items(game):
     add_random_water(game, game.nwater)
     add_agent(game)
 
+
 # probably should do this before doing anything else...
-def build_big_random_wall(game, orientation = 'random'):
+def build_big_random_wall(game, orientation='random'):
     if orientation == 'random':
         orientation = 'vertical'
-        if random.random()>.5:
+        if random.random() > .5:
             orientation = 'horizontal'
     if orientation == 'vertical':
-        w = random.randint(2,game.mapsize[0]-2)
+        w = random.randint(2, game.mapsize[0] - 2)
         for h in range(game.mapsize[1]):
-            add_block(game,(w,h))
+            add_block(game, (w, h))
     else:
-        h = random.randint(2,game.mapsize[1]-2)
+        h = random.randint(2, game.mapsize[1] - 2)
         for w in range(game.mapsize[0]):
-            add_block(game,(w,h))
-
-
-
+            add_block(game, (w, h))

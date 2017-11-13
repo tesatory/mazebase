@@ -10,9 +10,10 @@ import mazebase.grid_item as gi
 import mazebase.standard_grid_actions as standard_grid_actions
 import mazebase.game_factory as gf
 
-class game(gg.grid_game_2d):
+
+class Game(gg.GridGame2D):
     def __init__(self, opts):
-        super(game, self).__init__(opts)
+        super(Game, self).__init__(opts)
         self.nblocks = int(opts.get('nblocks') or 0)
         self.nwater = int(opts.get('nwater') or 0)
         self.nswitches = opts.get('nswitches') or 1
@@ -23,12 +24,14 @@ class game(gg.grid_game_2d):
         b = random.choice(self.items_bytype['block'])
         loc = b.attr['loc']
         self.remove_item(b)
-        s = gi.cycle_switch_opened_door({'loc':loc}, 
-                                    color = random.randint(0,self.ncolors-1))
+        s = gi.cycle_switch_opened_door(
+            {
+                'loc': loc
+            }, color=random.randint(0, self.ncolors - 1))
         self.add_prebuilt_item(s)
-        gi.add_random_cycle_switches(self,self.nswitches,self.ncolors)
-        #always goal0.  fixme?
-        gi.add_goal(self,self.get_empty_loc(), 0)
+        gi.add_random_cycle_switches(self, self.nswitches, self.ncolors)
+        # always goal0.  fixme?
+        gi.add_goal(self, self.get_empty_loc(), 0)
         gi.add_standard_items(self)
         self.agent = self.items_bytype['agent'][0]
         self.agent.replace_action('toggle_close',
@@ -36,12 +39,12 @@ class game(gg.grid_game_2d):
         self.finished = False
 
     def update(self):
-        super(game, self).update()
+        super(Game, self).update()
         self.finished = False
         items = self.items_byloc[self.agent.attr['loc']]
         for i in items:
             gname = i.attr.get('@goal')
-            if gname is not None:  
+            if gname is not None:
                 self.finished = True
 
     def get_reward(self):
@@ -49,9 +52,10 @@ class game(gg.grid_game_2d):
         r += self.agent.touch_cost()
         return r
 
-class factory(gf.game_factory):
-    def __init__(self, game_name, game_opts, game):
-        super(factory, self).__init__(game_name, game_opts, game)
+
+class Factory(gf.GameFactory):
+    def __init__(self, game_name, game_opts, Game):
+        super(Factory, self).__init__(game_name, game_opts, Game)
 
     def all_vocab(self, game_opts):
         vocab = []
@@ -69,7 +73,7 @@ class factory(gf.game_factory):
             vocab.append('color' + str(s))
         for s in range(game_opts['range']['map_width'][3]):
             for t in range(game_opts['range']['map_height'][3]):
-                vocab.append('loc_x' + str(s)+'x'+str(t))
+                vocab.append('loc_x' + str(s) + 'x' + str(t))
 
         return vocab
 
@@ -84,9 +88,14 @@ class factory(gf.game_factory):
         return actions
 
 
-if  __name__ == '__main__':
-    opts = {'map_width':12,'map_height':12,
-            'step_cost':-.1,'water_cost':-.1, 'nblocks':3,
-            'nwater':3}
-    g = game(opts)
+if __name__ == '__main__':
+    opts = {
+        'map_width': 12,
+        'map_height': 12,
+        'step_cost': -.1,
+        'water_cost': -.1,
+        'nblocks': 3,
+        'nwater': 3
+    }
+    g = Game(opts)
     g.interactive_ascii()

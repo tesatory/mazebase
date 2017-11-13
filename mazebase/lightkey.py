@@ -24,7 +24,7 @@ class Game(gg.GridGame2D):
         b = random.choice(self.items_bytype['block'])
         loc = b.attr['loc']
         self.remove_item(b)
-        s = gi.cycle_switch_opened_door(
+        s = gi.CycleSwitchOpenedDoor(
             {
                 'loc': loc
             }, color=random.randint(0, self.ncolors - 1))

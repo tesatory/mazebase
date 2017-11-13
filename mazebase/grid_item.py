@@ -31,10 +31,12 @@ _colors.append('white')
 # by the dictionary attr.
 # attr['loc'] if it exists gives the location
 #   of the item on the grid as a 2-tuple
-
+# all items should have an attr['_type']
 
 class GridItem(object):
     def __init__(self, attr):
+        if attr.get('_type') is None:
+            attr['_type'] = 'unkown_type'
         self.attr = attr
         # for visualization
         self.PRIO = 0

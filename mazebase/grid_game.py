@@ -80,7 +80,19 @@ class GridGame2D():
         raise RuntimeError(
             "Failed to find empty location after 100 tries! Your map"
             "size is probably too small")
-
+    
+    # Do not change attr['_type'] by hand.  always use:
+    def retype_item(self, item, newtype):
+        # TODO clean up len 0 lists?
+        assert (item in self.items)
+        oldtype = item.attr['_type']
+        item.attr['_type'] = newtype
+        self.items_bytype[oldtype].remove(item)
+        if self.items_bytype.get(newtype) is None:
+            self.items_bytype[newtype] = []
+        self.items_bytype[newtype].append(item)
+        
+    # Do not change attr['loc'] by hand.  always use:
     def move_item(self, item, loc):
         # TODO error if target loc is outside of map
         # TODO clean up len 0 lists?
@@ -94,6 +106,17 @@ class GridGame2D():
             self.items_byloc[loc].append(item)
         else:
             raise RuntimeError("Tried to move an item with no location")
+
+    # Do not change attr['name'] by hand.  always use:
+    def rename_item(self, item, newname):
+        # TODO clean up len 0 lists?
+        assert (item in self.items)
+        assert(self.items_byname.get(newname)) is None
+        oldname = item.attr.get('_name')
+        if oldname is not None:                
+            item.attr['_name'] = newname
+            self.items_byname.remove(item)
+        self.items_byname[newname] = item 
 
     def remove_item(self, item):
         assert (item in self.items)
@@ -120,10 +143,9 @@ class GridGame2D():
             # names should be unique.
             self.items_byname[item.attr.get('_name')] = item
         item_type = item.attr.get('_type')
-        if item_type is not None:
-            if self.items_bytype.get(item_type) is None:
-                self.items_bytype[item_type] = []
-            self.items_bytype.get(item_type).append(item)
+        if self.items_bytype.get(item_type) is None:
+            self.items_bytype[item_type] = []
+        self.items_bytype.get(item_type).append(item)
 
     def build_add_item(self, attr, loc=''):
         if loc == 'random_empty':
@@ -140,7 +162,7 @@ class GridGame2D():
         if attr.get('_factory') is not None:
             e = attr.get('_factory')(attr, self)
         else:
-            e = gi.grid_item(attr)
+            e = gi.GridItem(attr)
         self.add_prebuilt_item(e)
         return e
 

@@ -30,7 +30,7 @@ class GridGame2D():
         self.agent = None
 
 
-    def random_loc(self, fat):
+    def sample_loc(self, fat):
         x = random.randint(fat, self.mapsize[0] - fat - 1)
         y = random.randint(fat, self.mapsize[1] - fat - 1)
         return (x, y)
@@ -47,9 +47,9 @@ class GridGame2D():
         loc_items = self.items_byloc.get(loc, [])
         return all(i.attr.get('_immaterial') for i in loc_items)
 
-    def get_reachable_loc(self, fat=0, ensure_empty=False):
+    def sample_reachable_loc(self, fat=0, ensure_empty=False):
         for i in range(100):
-            loc = self.random_loc(fat)
+            loc = self.sample_loc(fat)
             if self.is_loc_reachable(loc):
                 if not ensure_empty:
                     return loc
@@ -127,11 +127,11 @@ class GridGame2D():
 
     def build_add_item(self, attr, loc=''):
         if loc == 'random_empty':
-            attr['loc'] = self.get_reachable_loc(ensure_empty=True)
+            attr['loc'] = self.sample_reachable_loc(ensure_empty=True)
         elif loc == 'random_reachable':
-            attr['loc'] = self.get_reachable_loc()
+            attr['loc'] = self.sample_reachable_loc()
         elif loc == 'random':
-            attr['loc'] = self.random_loc()
+            attr['loc'] = self.sample_loc()
         elif loc == '':
             pass
         else:

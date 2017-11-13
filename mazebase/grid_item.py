@@ -137,7 +137,7 @@ def add_agent(game, name=None, actions=None):
         else:
             n = len(agents)
         name = 'agent' + str(n)
-    loc = game.get_reachable_loc()
+    loc = game.sample_reachable_loc()
     attr = {'_type': 'agent', '@type': 'agent', '@name': name, '_name': name}
     attr['loc'] = loc
     e = GridAgent(attr, actions=actions)
@@ -290,19 +290,19 @@ def add_water(game, loc):
 
 def add_random_cycle_switches(game, nswitches, ncolors):
     for i in range(nswitches):
-        loc = game.get_reachable_loc(ensure_empty=True)
+        loc = game.sample_reachable_loc(ensure_empty=True)
         add_cycle_switch(game, loc, ncolors)
 
 
 def add_random_blocks(game, nblocks):
     for i in range(nblocks):
-        loc = game.get_reachable_loc(ensure_empty=True)
+        loc = game.sample_reachable_loc(ensure_empty=True)
         add_block(game, loc)
 
 
 def add_random_water(game, nwater):
     for i in range(nwater):
-        loc = game.get_reachable_loc(ensure_empty=True)
+        loc = game.sample_reachable_loc(ensure_empty=True)
         add_water(game, loc)
 
 

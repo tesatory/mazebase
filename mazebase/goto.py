@@ -11,7 +11,7 @@ import mazebase.game_factory as gf
 class Game(gg.GridGame2D):
     def __init__(self, opts):
         super(Game, self).__init__(opts)
-        self.goal_loc = self.get_reachable_loc(ensure_empty=True)
+        self.goal_loc = self.sample_reachable_loc(ensure_empty=True)
         self.nblocks = int(opts.get('nblocks') or 0)
         self.nwater = int(opts.get('nwater') or 0)
         destination = (

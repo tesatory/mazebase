@@ -6,7 +6,7 @@ from __future__ import print_function
 import types
 import random
 
-import mazebase.standard_grid_actions
+import mazebase.standard_grid_actions as standard_grid_actions
 
 _on_colors = []
 _on_colors.append('on_grey')

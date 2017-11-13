@@ -11,9 +11,9 @@ import mazebase.standard_grid_actions
 import mazebase.game_factory as gf
 
 
-class game(gg.grid_game_2d):
+class Game(gg.GridGame2D):
     def __init__(self, opts):
-        super(game, self).__init__(opts)
+        super(Game, self).__init__(opts)
 
         self.ngoals = opts.get('ngoals') or 2
         for i in range(self.ngoals):
@@ -37,7 +37,7 @@ class game(gg.grid_game_2d):
         self.finished = False
 
     def update(self):
-        super(game, self).update()
+        super(Game, self).update()
         self.finished = False
         items = self.items_byloc[self.agent.attr['loc']]
         c = self.items_bytype['cycle_switch'][0].color
@@ -53,9 +53,10 @@ class game(gg.grid_game_2d):
         r += self.agent.touch_cost()
         return r
 
-class factory(gf.game_factory):
-    def __init__(self, game_name, game_opts, game):
-        super(factory, self).__init__(game_name, game_opts, game)
+
+class Factory(gf.GameFactory):
+    def __init__(self, game_name, game_opts, Game):
+        super(Factory, self).__init__(game_name, game_opts, Game)
 
     def all_vocab(self, game_opts):
         vocab = []
@@ -93,4 +94,4 @@ if  __name__ == '__main__':
     opts = {'map_width':10,'map_height':10,
             'step_cost':-.1,'water_cost':-.1, 'nblocks':3,
             'nwater':3,'ngoals':5, 'ncolors':3}
-    g = game(opts)
+    g = Game(opts)

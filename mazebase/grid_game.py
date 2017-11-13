@@ -25,7 +25,7 @@ def format_number(s):
 #TODO .step()
 
 
-class grid_game_2d():
+class GridGame2D():
     def __init__(self, opts):
         self.t = 0
         self.opts = opts

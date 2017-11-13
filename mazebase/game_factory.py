@@ -27,7 +27,7 @@ def generate_opts(gopts):
     return opts
 
 
-class game_factory(object):
+class GameFactory(object):
     def __init__(self, game_name, game_opts, game):
         g = {'game_opts':game_opts,'game':game,'opts_generator':generate_opts}
         self.games = {game_name:g}

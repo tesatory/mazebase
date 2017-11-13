@@ -34,7 +34,7 @@ _colors.append('white')
 # attr['loc'] if it exists gives the location
 #   of the item on the grid as a 2-tuple
 
-class grid_item(object):
+class GridItem(object):
     def __init__(self,attr):
         self.attr = attr
         #for visualization
@@ -77,9 +77,10 @@ class grid_item(object):
 #agent
 ################################################################################
 
-class grid_agent(grid_item):
+
+class GridAgent(GridItem):
     def __init__(self, attr, actions = None):
-        super(grid_agent, self).__init__(attr)
+        super(GridAgent, self).__init__(attr)
         self.actions = {}
         self.game = None
         # actions = None gives default set of movement actions
@@ -136,7 +137,7 @@ def add_agent(game,name = None, actions = None):
     attr = {'_type':'agent', '@type':'agent',
             '@name':name, '_name':name}
     attr['loc'] = loc
-    e = grid_agent(attr, actions = actions)
+    e = GridAgent(attr, actions = actions)
     e.game = game
     game.add_prebuilt_item(e)
 
@@ -144,9 +145,9 @@ def add_agent(game,name = None, actions = None):
 #cycle switch
 ################################################################################
 #todo switches with visible number of states?
-class cycle_switch(grid_item):
+class CycleSwitch(GridItem):
     def __init__(self,attr):
-        super(cycle_switch, self).__init__(attr)
+        super(CycleSwitch, self).__init__(attr)
         assert(attr.get('_ncolors') is not None)
         self.ncolors = attr['_ncolors']
         self.setc(random.randint(0,attr['_ncolors']-1))
@@ -174,16 +175,16 @@ class cycle_switch(grid_item):
 
 def add_cycle_switch(game, loc, ncolors):
     attr = {'_type':'cycle_switch','_ncolors':ncolors,'loc':loc}
-    switch = cycle_switch(attr)
+    switch = CycleSwitch(attr)
     game.add_prebuilt_item(switch)
 
 
 ################################################################################
 #pushable block
 ################################################################################
-class pushable_block(grid_item):
+class PushableBlock(GridItem):
     def __init__(self,attr):
-        super(pushable_block, self).__init__(attr)
+        super(PushableBlock, self).__init__(attr)
         self.attr['_type'] = 'pushable_block'
         self.attr['@type'] = 'pushable_block'
         self.attr['_pushable'] = True
@@ -195,9 +196,9 @@ class pushable_block(grid_item):
 #cycle_switch_opened_door
 ################################################################################
 #todo door superclass?
-class cycle_switch_opened_door(grid_item):
+class CycleSwitchOpenedDoor(GridItem):
     def __init__(self,attr, color = 0):
-        super(cycle_switch_opened_door, self).__init__(attr)
+        super(CycleSwitchOpenedDoor, self).__init__(attr)
         self.attr['_type'] = 'cycle_switch_opened_door'
         self.attr['@type'] = 'cycle_switch_opened_door'
         self.attr['@color'] = 'color' + str(color)

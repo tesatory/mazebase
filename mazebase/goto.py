@@ -3,8 +3,6 @@ from __future__ import division
 from __future__ import unicode_literals
 from __future__ import print_function
 
-import random
-
 import mazebase.grid_game as gg
 import mazebase.grid_item as gi
 import mazebase.game_factory as gf

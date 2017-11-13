@@ -5,7 +5,7 @@ from __future__ import print_function
 
 import random
 
-import mazebase.standard_grid_actions
+import mazebase.standard_grid_actions as standard_grid_actions
 import mazebase.grid_game as gg
 import mazebase.grid_item as gi
 import mazebase.game_factory as gf

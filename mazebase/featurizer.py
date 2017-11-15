@@ -37,7 +37,7 @@ class SentenceFeaturizer(object):
                 else:
                     return None
             else:
-                s.append('loc_x' + str(loc[0]) + 'y' + str(loc[1]))
+                s.append('loc_x' + str(item_loc[0]) + 'y' + str(item_loc[1]))
         for i in item.attr:
             if i == 'loc':
                 continue

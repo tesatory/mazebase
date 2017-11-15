@@ -220,10 +220,10 @@ class CycleSwitchOpenedDoor(GridItem):
 
 def add_corners(game):
     attr = {'_type': 'corner', '_immaterial': True, 'corner': 0}
-    game.build_add_item(attr, loc=(0, 0))
-    game.build_add_item(attr, loc=(0, game.mapsize[1] - 1))
-    game.build_add_item(attr, loc=(game.mapsize[0] - 1, 0))
-    game.build_add_item(attr, loc=(game.mapsize[0] - 1, game.mapsize[1] - 1))
+    game.build_add_item(attr.copy(), loc=(0, 0))
+    game.build_add_item(attr.copy(), loc=(0, game.mapsize[1] - 1))
+    game.build_add_item(attr.copy(), loc=(game.mapsize[0] - 1, 0))
+    game.build_add_item(attr.copy(), loc=(game.mapsize[0] - 1, game.mapsize[1] - 1))
 
 
 def build_info_attr(message):

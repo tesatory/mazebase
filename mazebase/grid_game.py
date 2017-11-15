@@ -7,7 +7,7 @@ import random
 import os
 
 import mazebase.grid_item as gi
-from util.termcolor import cprint
+from mazebase.util.termcolor import cprint
 
 
 # the factory collects the vocab...

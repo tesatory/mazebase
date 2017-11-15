@@ -4,7 +4,6 @@ from __future__ import unicode_literals
 from __future__ import print_function
 
 from mazebase.featurizer import SentenceFeaturizer
-
 import torch
 
 #to be fed into e.g. nn.EmbeddingBag
@@ -26,6 +25,28 @@ class SparseSentenceFeaturizer(SentenceFeaturizer):
             lx = torch.LongTensor([vocab[j] for j in item])
             x = torch.cat((x,lx))
         return x, item_lengths
+
+# returns a tensor of size Height x Width x VocabSize
+class GridFeaturizer(SentenceFeaturizer):
+    def __init__(self, opts, dictionary = None):
+        opts['separate_loc'] = True
+        super(GridFeaturizer, self).__init__(opts, dictionary = dictionary)
+                                                       
+    def to_tensor(self, game, agent = None):
+        vocab = self.dictionary['vocab']
+        S = self.to_sentence(game, agent = agent)
+        if self.opts['egocentric_coordinates']:
+            x = torch.zeros(self.opts['visible_range']*2-1, 
+                            self.opts['visible_range']*2-1, len(vocab))
+        else:
+            # TODO: or we can get the size from factory
+            x = torch.zeros(self.opts['max_map_sizes'][0], 
+                            self.opts['max_map_sizes'][1], len(vocab))
+        for item, loc in S:
+            for w in item:
+                x[loc[0]][loc[1]][vocab[w]] += 1
+        return x
+            
 
 if __name__ == '__main__':
     import mazebase.goto as goto

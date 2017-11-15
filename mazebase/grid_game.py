@@ -17,7 +17,7 @@ from util.termcolor import cprint
 # TODO .step()
 
 
-class GridGame2D():
+class GridGame2D(object):
     def __init__(self, opts):
         self.t = 0
         self.opts = opts
@@ -163,12 +163,6 @@ class GridGame2D():
 
     def act(self, action, agent=0):
         self.items_bytype['agent'][agent].act(action)
-
-    def to_sentence(self):
-        s = []
-        for i in self.items:
-            s.append(i.to_sentence())
-        return s
 
     def interactive_ascii(self):
         self.display_ascii()

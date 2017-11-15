@@ -46,6 +46,7 @@ class GameFactory(object):
         self.iactions.sort()
         self.actions = dict([[self.iactions[i], i]
                              for i in range(len(self.iactions))])
+        self.dictionary = {'vocab':self.vocab,'ivocab':self.ivocab}
 
     def init_game(self, gname):
         g = self.games[gname]

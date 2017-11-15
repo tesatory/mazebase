@@ -42,6 +42,7 @@ class Factory(gf.GameFactory):
     def all_vocab(self, game_opts):
         vocab = []
         vocab.append('info')
+        vocab.append('corner')
         vocab.append('obj0')
         vocab.append('go')
         vocab.append('absolute')
@@ -51,8 +52,8 @@ class Factory(gf.GameFactory):
         vocab.append('agent0')
         for s in range(game_opts['range']['map_width'][3]):
             for t in range(game_opts['range']['map_height'][3]):
-                vocab.append('ax' + str(s) + 'x' + str(t))
-                vocab.append('loc_x' + str(s) + 'x' + str(t))
+                vocab.append('ax' + str(s) + 'y' + str(t))
+                vocab.append('loc_x' + str(s) + 'y' + str(t))
         return vocab
 
     def all_actions(self, game_opts):

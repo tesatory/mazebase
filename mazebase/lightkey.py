@@ -72,10 +72,8 @@ class Factory(gf.GameFactory):
         vocab.append('goal0')
         for s in range(game_opts['range']['ncolors'][3]):
             vocab.append('color' + str(s))
-        for s in range(game_opts['range']['map_width'][3]):
-            for t in range(game_opts['range']['map_height'][3]):
-                vocab.append('loc_x' + str(s) + 'y' + str(t))
-
+        if game_opts['featurizer'].get('abs_loc_vocab'):
+            gf.add_absolute_loc_vocab(vocab, game_opts)
         return vocab
 
     def all_actions(self, game_opts):

@@ -53,6 +53,12 @@ if __name__ == '__main__':
     import mazebase.switches as switches
 
     game_opts = {}
+    
+    featurizer_opts = {}
+    
+    game_featurizer_opts = {}
+    game_featurizer_opts['abs_loc_vocab'] = True
+
     shared_static_opts = {}
     shared_static_opts['step_cost'] = -.1
     shared_static_opts['water_cost'] = -.2
@@ -72,6 +78,8 @@ if __name__ == '__main__':
     range_opts['nwater'] = (1, 5, 1, 5, 1)
     go['range'] = range_opts
 
+    go['featurizer'] = game_featurizer_opts
+
     game_opts['goto'] = go
 
     #####################################
@@ -90,6 +98,8 @@ if __name__ == '__main__':
     range_opts['nswitches'] = (3, 5, 3, 5, 1)
     range_opts['ncolors'] = (3, 3, 3, 3, 0)
     go['range'] = range_opts
+
+    go['featurizer'] = game_featurizer_opts
 
     game_opts['switches'] = go
 

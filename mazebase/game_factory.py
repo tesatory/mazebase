@@ -12,7 +12,7 @@ import random
 # todo curriculum
 # todo save and load vocab and action lists
 
-def absolute_loc_vocab(vocab, game_opts):
+def add_absolute_loc_vocab(vocab, game_opts):
     for s in range(game_opts['range']['map_width'][3]):
         for t in range(game_opts['range']['map_height'][3]):
             vocab.append('ax' + str(s) + 'y' + str(t))

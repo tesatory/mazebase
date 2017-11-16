@@ -13,7 +13,7 @@ class SentenceFeaturizer(object):
 
     def load_dictionary(self, dictionary):
         self.dictionary = dictionary
-        if not (self.opts['separate_loc'] == True):
+        if not (self.opts.get('separate_loc')):
             self.adjust_dictionary()
 
     def adjust_dictionary(self):
@@ -31,21 +31,21 @@ class SentenceFeaturizer(object):
         s = []
         item_loc = item.attr.get('loc')
         if item_loc is None:
-            if self.opts['separate_loc']:
+            if self.opts.get('separate_loc'):
                 # TODO: handle it correctly
                 return None
         else:
             if self.opts['egocentric_coordinates']:
                 loc = (item_loc[0]-agent_loc[0], item_loc[1]-agent_loc[1])
                 if abs(loc[0]) < self.opts['visible_range'] and abs(loc[1]) < self.opts['visible_range']:
-                    if self.opts['separate_loc']:
+                    if self.opts.get('separate_loc'):
                         item_loc = (loc[0] + self.opts['visible_range'] - 1,
                                     loc[1] + self.opts['visible_range'] - 1)
                     else:
                         s.append('rx' + str(loc[0]) + 'y' + str(loc[1]))
                 else:
                     return None
-            elif not self.opts['separate_loc']:
+            elif not self.opts.get('separate_loc'):
                 s.append('ax' + str(item_loc[0]) + 'y' + str(item_loc[1]))
         for i in item.attr:
             if i == 'loc':
@@ -55,7 +55,7 @@ class SentenceFeaturizer(object):
                     s.append(i)
                 else:
                     s.append(item.attr[i])
-        if self.opts['separate_loc']:
+        if self.opts.get('separate_loc'):
             return (s, item_loc)
         else:
             return s
@@ -78,6 +78,8 @@ if __name__ == '__main__':
     import mazebase.switches as switches
 
     game_opts = {}
+    game_opts['featurizer'] = {}
+    game_opts['featurizer']['abs_loc_vocab'] = True
     shared_static_opts = {}
     shared_static_opts['step_cost'] = -.1
     shared_static_opts['water_cost'] = -.2

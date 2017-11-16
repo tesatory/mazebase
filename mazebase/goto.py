@@ -12,11 +12,13 @@ class Game(gg.GridGame2D):
     def __init__(self, opts):
         super(Game, self).__init__(opts)
         self.goal_loc = self.sample_reachable_loc(ensure_empty=True)
+        if opts.get('fixed_goal'):
+            self.goal_loc = (0,0)
         self.nblocks = int(opts.get('nblocks') or 0)
         self.nwater = int(opts.get('nwater') or 0)
         destination = (
             'ax' + str(self.goal_loc[0]) + 'y' + str(self.goal_loc[1]))
-        info = gi.build_info_attr('obj0 go absolute ' + destination)
+            info = gi.build_info_attr('obj0 go absolute ' + destination)
         self.build_add_item(info)
         gi.add_standard_items(self)
         self.agent = self.items_bytype['agent'][0]
@@ -50,10 +52,12 @@ class Factory(gf.GameFactory):
         vocab.append('water')
         vocab.append('agent')
         vocab.append('agent0')
-        for s in range(game_opts['range']['map_width'][3]):
-            for t in range(game_opts['range']['map_height'][3]):
-                vocab.append('ax' + str(s) + 'y' + str(t))
-                vocab.append('loc_x' + str(s) + 'y' + str(t))
+        if not game_opts['static'].get('no_self_loc_vocab'):
+            gf.add_absolute_loc_vocab(vocab, game_opts)
+        if game_opts['static'].get('fixed_goal'):
+            vocab.append('ax0y0')
+        else:
+            gf.add_absolute_loc_vocab(vocab, game_opts)
         return vocab
 
     def all_actions(self, game_opts):

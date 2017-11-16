@@ -7,7 +7,7 @@ from __future__ import print_function
 class SentenceFeaturizer(object):
     def __init__(self, opts, dictionary = None):
         self.opts = opts
-        self.load_dictionary(dictionary)    
+        self.load_dictionary(dictionary)
         if self.opts['egocentric_coordinates']:
             assert(opts.get('visible_range') is not None)
 
@@ -23,7 +23,7 @@ class SentenceFeaturizer(object):
             vrange = self.opts['visible_range']
             for s in range(-vrange+1,vrange):
                 for t in range(-vrange+1,vrange):
-                    w = 'rloc_x' + str(s) + 'y' + str(t)
+                    w = 'rx' + str(s) + 'y' + str(t)
                     self.dictionary['ivocab'].append(w)
                     self.dictionary['vocab'][w] = len(self.dictionary['ivocab'])
 
@@ -34,7 +34,7 @@ class SentenceFeaturizer(object):
             if self.opts['separate_loc']:
                 # TODO: handle it correctly
                 return None
-        else:            
+        else:
             if self.opts['egocentric_coordinates']:
                 loc = (item_loc[0]-agent_loc[0], item_loc[1]-agent_loc[1])
                 if abs(loc[0]) < self.opts['visible_range'] and abs(loc[1]) < self.opts['visible_range']:
@@ -42,11 +42,11 @@ class SentenceFeaturizer(object):
                         item_loc = (loc[0] + self.opts['visible_range'] - 1,
                                     loc[1] + self.opts['visible_range'] - 1)
                     else:
-                        s.append('rloc_x' + str(loc[0]) + 'y' + str(loc[1]))
+                        s.append('rx' + str(loc[0]) + 'y' + str(loc[1]))
                 else:
                     return None
             elif not self.opts['separate_loc']:
-                s.append('loc_x' + str(item_loc[0]) + 'y' + str(item_loc[1]))
+                s.append('ax' + str(item_loc[0]) + 'y' + str(item_loc[1]))
         for i in item.attr:
             if i == 'loc':
                 continue

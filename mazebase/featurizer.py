@@ -93,11 +93,13 @@ if __name__ == '__main__':
     go['static'] = static_opts
 
     range_opts = {}
-    range_opts['map_width'] = (5, 10, 5, 10, 1)
-    range_opts['map_height'] = (5, 10, 5, 10, 1)
-    range_opts['nblocks'] = (1, 5, 1, 5, 1)
-    range_opts['nwater'] = (1, 5, 1, 5, 1)
+    range_opts['map_width'] = [5, 10, 5, 10, 1]
+    range_opts['map_height'] = [5, 10, 5, 10, 1]
+    range_opts['nblocks'] = [1, 5, 1, 5, 1]
+    range_opts['nwater'] = [1, 5, 1, 5, 1]
     go['range'] = range_opts
+
+    go['featurizer'] = game_opts['featurizer']
 
     game_opts['goto'] = go
 
@@ -110,13 +112,15 @@ if __name__ == '__main__':
     go['static'] = static_opts
 
     range_opts = {}
-    range_opts['map_width'] = (5, 10, 5, 10, 1)
-    range_opts['map_height'] = (5, 10, 5, 10, 1)
-    range_opts['nblocks'] = (1, 5, 1, 5, 1)
-    range_opts['nwater'] = (1, 5, 1, 5, 1)
-    range_opts['nswitches'] = (3, 5, 3, 5, 1)
-    range_opts['ncolors'] = (3, 3, 3, 3, 0)
+    range_opts['map_width'] = [5, 10, 5, 10, 1]
+    range_opts['map_height'] = [5, 10, 5, 10, 1]
+    range_opts['nblocks'] = [1, 5, 1, 5, 1]
+    range_opts['nwater'] = [1, 5, 1, 5, 1]
+    range_opts['nswitches'] = [3, 5, 3, 5, 1]
+    range_opts['ncolors'] = [3, 3, 3, 3, 0]
     go['range'] = range_opts
+
+    go['featurizer'] = game_opts['featurizer']
 
     game_opts['switches'] = go
 

@@ -84,40 +84,42 @@ class GameFactory(object):
         gopts = self.games[gname]['game_opts']
         if gopts.get('curriculm_frozen'):
             return
-        opt = random.choice(list(gopts['range']))
-        gopts[opt][1] += gopts[opt][4]
-        gopts[opt][1] = min(gopts[opt][1], gopts[opt][3])
+        range_opts = gopts['range']
+        opt = random.choice(list(range_opts))
+        range_opts[opt][1] += range_opts[opt][4]
+        range_opts[opt][1] = min(range_opts[opt][1], range_opts[opt][3])
 
     def easier_random(self, gname):
         gopts = self.games[gname]['game_opts']
         if gopts.get('curriculm_frozen'):
             return
-        opt = random.choice(list(gopts['range']))
-        gopts[opt][1] -= gopts[opt][4]
-        gopts[opt][1] = max(gopts[opt][1], gopts[opt][2])
+        range_opts = gopts['range']
+        opt = random.choice(list(range_opts))
+        range_opts[opt][1] -= range_opts[opt][4]
+        range_opts[opt][1] = max(range_opts[opt][1], range_opts[opt][2])
 
     def hardest(self, gname):
         gopts = self.games[gname]['game_opts']
         if gopts.get('curriculm_frozen'):
             return
         for opt in gopts['range']:
-            gopts[opt][1] = gopts[opt][3]
+            gopts['range'][opt][1] = gopts['range'][opt][3]
 
     def easiest(self, gname):
         gopts = self.games[gname]['game_opts']
         if gopts.get('curriculm_frozen'):
             return
         for opt in gopts['range']:
-            gopts[opt][1] = gopts[opt][2]
+            gopts['range'][opt][1] = gopts['range'][opt][2]
 
     def check_curriculum_state(self, gname):
         easiest = True
         hardest = True
         gopts = self.games[gname]['game_opts']
         for opt in gopts['range']:
-            if gopts[opt][1] < gopts[opt][3]:
+            if gopts['range'][opt][1] < gopts['range'][opt][3]:
                 hardest = False
-            if gopts[opt][1] > gopts[opt][2]:
+            if gopts['range'][opt][1] > gopts['range'][opt][2]:
                 easiest = False
         if easiest:
             return -1
@@ -171,13 +173,12 @@ class GameFactory(object):
 
 
 if __name__ == '__main__':
-    import switches
-    import goto
-
-    games = {}
+    import mazebase.goto as goto
+    import mazebase.switches as switches
 
     game_opts = {}
-    game_opts['multigames'] = {}
+    game_opts['featurizer'] = {}
+#    game_opts['featurizer']['abs_loc_vocab'] = True
     shared_static_opts = {}
     shared_static_opts['step_cost'] = -.1
     shared_static_opts['water_cost'] = -.2
@@ -191,15 +192,15 @@ if __name__ == '__main__':
     go['static'] = static_opts
 
     range_opts = {}
-    range_opts['map_width'] = (5, 10, 5, 10, 1)
-    range_opts['map_height'] = (5, 10, 5, 10, 1)
-    range_opts['nblocks'] = (1, 5, 1, 5, 1)
-    range_opts['nwater'] = (1, 5, 1, 5, 1)
+    range_opts['map_width'] = [5, 10, 5, 10, 1]
+    range_opts['map_height'] = [5, 10, 5, 10, 1]
+    range_opts['nblocks'] = [1, 5, 1, 5, 1]
+    range_opts['nwater'] = [1, 5, 1, 5, 1]
     go['range'] = range_opts
 
-    game_opts['multigames']['goto'] = go
+    go['featurizer'] = game_opts['featurizer']
 
-    #    games['goto'] = (goto.game, goto.factory_interface)
+    game_opts['goto'] = go
 
     #####################################
     # switches:
@@ -210,19 +211,20 @@ if __name__ == '__main__':
     go['static'] = static_opts
 
     range_opts = {}
-    range_opts['map_width'] = (5, 10, 5, 10, 1)
-    range_opts['map_height'] = (5, 10, 5, 10, 1)
-    range_opts['nblocks'] = (1, 5, 1, 5, 1)
-    range_opts['nwater'] = (1, 5, 1, 5, 1)
-    range_opts['nswitches'] = (3, 5, 3, 5, 1)
-    range_opts['ncolors'] = (3, 3, 3, 3, 0)
+    range_opts['map_width'] = [5, 10, 5, 10, 1]
+    range_opts['map_height'] = [5, 10, 5, 10, 1]
+    range_opts['nblocks'] = [1, 5, 1, 5, 1]
+    range_opts['nwater'] = [1, 5, 1, 5, 1]
+    range_opts['nswitches'] = [3, 5, 3, 5, 1]
+    range_opts['ncolors'] = [3, 3, 3, 3, 0]
     go['range'] = range_opts
 
-    game_opts['multigames']['switches'] = go
+    go['featurizer'] = game_opts['featurizer']
 
-    #    games['switches'] = (switches.game, switches.factory_interface)
+    game_opts['switches'] = go
 
     ######################################
-    F = goto.factory('goto', game_opts['multigames']['goto'], goto.game)
-    F += switches.factory('switches', game_opts['multigames']['switches'],
-                          switches.game)
+    F = goto.Factory('goto', game_opts['goto'], goto.Game)
+    F += switches.Factory('switches', game_opts['switches'],
+                          switches.Game)
+    g = F.init_random_game()

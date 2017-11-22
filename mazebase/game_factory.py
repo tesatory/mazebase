@@ -17,6 +17,10 @@ def add_absolute_loc_vocab(vocab, game_opts):
         for t in range(game_opts['range']['map_height'][3]):
             vocab.append('ax' + str(s) + 'y' + str(t))
 
+# default range option is specified as 
+# [current_min, current_max, min_max, max_max, increment]
+# min_max,, max_max, and increment are only used in curriculum
+
 def generate_opts(gopts):
     opts = {}
     for s in gopts['static']:
@@ -67,9 +71,99 @@ class GameFactory(object):
     def all_actions(self, game_opts):
         raise NotImplementedError
 
+    # default curriculum methods assumes a range option is 
+    # specified as [current_min, current_max, min_max, max_max, increment]
+    # that is: to make a game harder, you increase the max of the possible
+    # values for that option (but still allow the possibility that smaller
+    # values might be generated)
+    # to build a custom curriculum, you should override harder_random(), 
+    # easier_random(), check_hardness(), hardest(), easiest(), and probably the function
+    # generate_opts() above
+
+    def harder_random(self, gname):
+        gopts = self.games[gname]['game_opts']
+        if gopts.get('curriculm_frozen'):
+            return
+        opt = random.choice(list(gopts['range']))
+        gopts[opt][1] += gopts[opt][4]
+        gopts[opt][1] = min(gopts[opt][1], gopts[opt][3])
+
+    def easier_random(self, gname):
+        gopts = self.games[gname]['game_opts']
+        if gopts.get('curriculm_frozen'):
+            return
+        opt = random.choice(list(gopts['range']))
+        gopts[opt][1] -= gopts[opt][4]
+        gopts[opt][1] = max(gopts[opt][1], gopts[opt][2])
+
+    def hardest(self, gname):
+        gopts = self.games[gname]['game_opts']
+        if gopts.get('curriculm_frozen'):
+            return
+        for opt in gopts['range']:
+            gopts[opt][1] = gopts[opt][3]
+
+    def easiest(self, gname):
+        gopts = self.games[gname]['game_opts']
+        if gopts.get('curriculm_frozen'):
+            return
+        for opt in gopts['range']:
+            gopts[opt][1] = gopts[opt][2]
+
+    def check_curriculum_state(self, gname):
+        easiest = True
+        hardest = True
+        gopts = self.games[gname]['game_opts']
+        for opt in gopts['range']:
+            if gopts[opt][1] < gopts[opt][3]:
+                hardest = False
+            if gopts[opt][1] > gopts[opt][2]:
+                easiest = False
+        if easiest:
+            return -1
+        elif hardest: 
+            return 1
+        else:
+            return 0        
+
+    def freeze_curriculum(self, gname):
+        self.games[gname]['game_opts']['curriculum_frozen'] = True
+
+    def unfreeze_curriculum(self, gname):
+        self.games[gname]['game_opts']['curriculum_frozen'] = False
+
+    def collect_results(self, gname, r):
+        results = self.games[gname]['game_opts'].get('results')
+        if results is None:
+            self.reset_counters(gname)
+        results['total_count'] += 1
+        results['success_count'] += r
+        
+    #error if no results?
+    def success_pct(self, gname):
+        results = self.games[gname]['game_opts'].get('results')
+        if results is None:
+            return 0
+        else:
+            return results['success_count']/results['total_count']
+
+    def total_count(self, gname):
+        results = self.games[gname]['game_opts'].get('results')
+        if results is None:
+            return 0
+        else:
+            return results['total_count']
+
+    def reset_counters(self, gname):
+        self.games[gname]['game_opts']['results'] = {'success_count':0,'total_count':0}
+
     def __add__(self, other):
         for i in other.games:
-            self.games[i] = other.games[i]
+            if not self.games.get(i):
+                self.games[i] = other.games[i]
+            else:
+                newname = i + '0'
+                self.games[newname] = other.games[i]
         self.ivocab = list(set(self.ivocab) | set(other.ivocab))
         self.iactions = list(set(self.iactions) | set(other.iactions))
         self.sort_vocabs()

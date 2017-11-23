@@ -11,7 +11,6 @@ from mazebase.util.termcolor import cprint
 
 
 # the factory collects the vocab...
-# the factory holds the featurizer
 # the factory holds the mapping from indices to actions
 #     common for all agents
 # TODO .step()

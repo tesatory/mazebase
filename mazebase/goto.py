@@ -39,6 +39,9 @@ class Game(gg.GridGame2D):
 class Factory(gf.GameFactory):
     def __init__(self, game_name, game_opts, Game):
         super(Factory, self).__init__(game_name, game_opts, Game)
+        ro = ('map_width', 'map_height', 'step_cost', 'nblocks', 'nwater', 
+              'water_cost','fixed_goal')
+        self.games[game_name]['required_opts'] = ro
 
     def all_vocab(self, game_opts):
         vocab = []

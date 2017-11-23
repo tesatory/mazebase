@@ -42,7 +42,10 @@ class GameFactory(object):
             'game': game,
             'opts_generator': generate_opts
         }
-        self.games = {game_name: g}
+        g['counters'] = {}
+        g['required_opts'] = ['map_width','map_height']
+        self.games = {game_name: g}        
+        self.reset_counters(game_name)
         self.ivocab = self.all_vocab(game_opts)
         self.iactions = self.all_actions(game_opts)
         self.sort_vocabs()
@@ -59,7 +62,9 @@ class GameFactory(object):
     def init_game(self, gname):
         g = self.games[gname]
         opts = g['opts_generator'](g['game_opts'])
-        return g['game'](opts)
+        game = g['game'](opts)
+        game.factory_name = gname
+        return 
 
     def init_random_game(self):
         gname = random.choice(list(self.games.keys()))
@@ -135,36 +140,42 @@ class GameFactory(object):
         self.games[gname]['game_opts']['curriculum_frozen'] = False
 
     def collect_results(self, gname, r):
-        results = self.games[gname]['game_opts'].get('results')
-        if results is None:
-            self.reset_counters(gname)
+        results = self.games[gname]['counters']
         results['total_count'] += 1
         results['success_count'] += r
         
     #error if no results?
     def success_pct(self, gname):
-        results = self.games[gname]['game_opts'].get('results')
-        if results is None:
-            return 0
-        else:
-            return results['success_count']/results['total_count']
+        results = self.games[gname]['counters']
+        return results['success_count']/results['total_count']
 
     def total_count(self, gname):
-        results = self.games[gname]['game_opts'].get('results')
-        if results is None:
-            return 0
-        else:
-            return results['total_count']
+        return self.games[gname]['counters']['total_count']
 
     def reset_counters(self, gname):
-        self.games[gname]['game_opts']['results'] = {'success_count':0,'total_count':0}
+        self.games[gname]['counters'] = {'success_count':0,'total_count':0}
+
+    def check_opts(self):
+        for g in self.games:
+            ro = self.games[g]['required_opts']
+            for o in ro:
+                has_opt = False
+                for opt_type in self.games[g]['game_opts']:
+                    for opt_name in self.games[g]['game_opts'][opt_type]:
+                        if opt_name == o:
+                            has_opt = True
+                if not has_opt:
+                    print('warning, game "' + g + '" has option "' + o + '" registered as required but that option is not in its game_opts') 
+            #todo check the other way around for extraneous opts in game_opts
+            #todo eventually do this right?
+        
 
     def __add__(self, other):
         for i in other.games:
             if not self.games.get(i):
                 self.games[i] = other.games[i]
             else:
-                newname = i + '0'
+                newname = i + str(random.randint(0,100000))
                 self.games[newname] = other.games[i]
         self.ivocab = list(set(self.ivocab) | set(other.ivocab))
         self.iactions = list(set(self.iactions) | set(other.iactions))

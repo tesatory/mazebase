@@ -16,6 +16,7 @@ class Game(gg.GridGame2D):
         super(Game, self).__init__(opts)
         self.nblocks = int(opts.get('nblocks') or 0)
         self.nwater = int(opts.get('nwater') or 0)
+        #these are decoys:
         self.nswitches = opts.get('nswitches') or 1
         self.ncolors = opts.get('ncolors') or 3
         info = gi.build_info_attr('go goal0')
@@ -56,6 +57,9 @@ class Game(gg.GridGame2D):
 class Factory(gf.GameFactory):
     def __init__(self, game_name, game_opts, Game):
         super(Factory, self).__init__(game_name, game_opts, Game)
+        ro = ('map_width', 'map_height', 'step_cost', 'water_cost', 'nblocks', 
+              'nwater', 'nswitches')
+        self.games[game_name]['required_opts'] = ro
 
     def all_vocab(self, game_opts):
         vocab = []

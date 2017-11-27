@@ -109,7 +109,11 @@ class GridAgent(GridItem):
 
     # TODO symbol depends on agent id
     def _get_display_symbol(self):
-        return (u' A ', None, None, None)
+        s = self.attr.get('_display_symbol')
+        if s is not None:
+            return s
+        else:
+            return (u' A ', None, None, None)
 
 
 def add_agent(game, name=None, actions=None):

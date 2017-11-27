@@ -12,6 +12,8 @@ import numpy as np
 import action_utils
 #from multi_threading import *
 
+from utils import Timer
+import copy
 
 
 Transition = namedtuple('Transition', ('state', 'action', 'mask', 'next_state',
@@ -38,8 +40,8 @@ class Memory(object):
         return len(self.memory)
 
 class EpisodeRunner(object):
-    def __init__(self, env, policy_net, value_net, args):
-        self.env = env
+    def __init__(self, env_maker, policy_net, value_net, args):
+        self.env = env_maker()
 #        self.test = mp.Event()
 #        self.test.clear()
         self.display = False
@@ -94,10 +96,18 @@ class Trainer:
         log['#batch'] = LogField(list(), False, '')
         log['reward'] = LogField(list(), True, '#batch')
         self.log = log
+
     def run(self, num_iteration):
         args = self.args
         runner = self.runner
         log = self.log
+        if self.args.gpu:
+            gpu_policy = copy.deepcopy(runner.policy_net)
+            gpu_value = copy.deepcopy(runner.value_net)
+            gpu_policy.cuda()
+            gpu_value.cuda()
+            self.optimizer.param_groups = []
+            self.optimizer.add_param_group({'params': torch.nn.ModuleList([gpu_policy, gpu_value]).parameters()})
         for iter_ind in range(num_iteration):
             memory = Memory()
             num_steps = 0
@@ -125,8 +135,15 @@ class Trainer:
             reward_batch /= num_batch
             batch = memory.sample()
             #fixme value net
-            update_params(batch, runner.policy_net, 
-                          runner.value_net, self.optimizer, args)
+            if self.args.gpu:
+                gpu_policy.load_state_dict(runner.policy_net.state_dict())
+                gpu_value.load_state_dict(runner.value_net.state_dict())
+                update_params(batch, gpu_policy, gpu_value, self.optimizer, args)
+                runner.policy_net.load_state_dict(gpu_policy.state_dict())
+                runner.value_net.load_state_dict(gpu_value.state_dict())
+            else:
+                update_params(batch, runner.policy_net, 
+                              runner.value_net, self.optimizer, args)
             runner.reset()
 
             if self.i_episode % args.log_interval == 0:
@@ -156,6 +173,9 @@ def update_params(batch, policy_net, value_net, optimizer, args):
     masks = torch.Tensor(batch.mask)
     actions = torch.from_numpy(np.concatenate(batch.action, 0))
     states = torch.from_numpy(np.stack(batch.state, axis = 0))
+    if args.gpu:
+        states = states.cuda()
+        actions = actions.cuda()
     states = Variable(states, requires_grad=False)
     values = value_net(states)
 
@@ -176,6 +196,9 @@ def update_params(batch, policy_net, value_net, optimizer, args):
         prev_advantage = advantages[i, 0]
 
     targets = Variable(returns).squeeze()
+    if args.gpu:
+        advantages = advantages.cuda()
+        targets = targets.cuda()
 
     if args.normalize_rewards:
         advantages = (advantages - advantages.mean()) / advantages.std()

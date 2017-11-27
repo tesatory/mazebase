@@ -53,6 +53,7 @@ parser.add_argument('--nthreads', type=int, default=10,
                     help='How many threads to run envs in')
 parser.add_argument('--config_path', default="config/test.py",
                     help='path to config file')
+parser.add_argument('--gpu', default=False, action="store_true", help='use GPU')
 parser.add_argument('--max_steps', default=20, type=int, help='force to end the game after this many steps')
 parser.add_argument('--num_iterations', default=10000, type=int, help='number of episodes')
 parser.add_argument('--nactions', default='1', type=str, help='the number of agent actions (1 for contineous). Use N:M:K for multiple actions')
@@ -72,12 +73,14 @@ if args.plot:
     vis = visdom.Visdom(env=args.plot_env)
 
 
-game_opts, games = load_config(args.config_path)
-F = gf.GameFactory(None, None, None)
-for g in games:
-    F += games[g].Factory(g, game_opts[g], games[g].Game)
-featurizer = GridFeaturizer(game_opts['featurizer'], F.dictionary)
-env = env_wrapper.MazeBaseWrapper(F, featurizer, args)
+def env_maker():
+    game_opts, games = load_config(args.config_path)
+    F = gf.GameFactory(None, None, None)
+    for g in games:
+        F += games[g].Factory(g, game_opts[g], games[g].Game)
+    featurizer = GridFeaturizer(game_opts['featurizer'], F.dictionary)
+    return env_wrapper.MazeBaseWrapper(F, featurizer, args)
+env = env_maker()  # dummy
 
 num_inputs = env.observation_dim
 args.num_actions = env.num_actions
@@ -99,11 +102,11 @@ optimizer = optim.RMSprop(torch.nn.ModuleList([policy_net, value_net]).parameter
                 
 if args.nthreads > 1:               
     def build_eprunner(): 
-        return trainer.EpisodeRunner(env, policy_net, value_net, args)
+        return trainer.EpisodeRunner(env_maker, policy_net, value_net, args)
 
     runner = tt.ThreadedEpisodeRunner(args, build_eprunner)
 else:
-    runner = trainer.EpisodeRunner(env, policy_net, value_net, args)
+    runner = trainer.EpisodeRunner(env_maker, policy_net, value_net, args)
 
 playground = trainer.Trainer(runner, optimizer, args)
 playground.run(args.num_iterations)

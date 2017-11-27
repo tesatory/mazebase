@@ -8,7 +8,7 @@ class SentenceFeaturizer(object):
     def __init__(self, opts, dictionary = None):
         self.opts = opts
         self.load_dictionary(dictionary)
-        if self.opts['egocentric_coordinates']:
+        if self.opts.get('egocentric_coordinates'):
             assert(opts.get('visible_range') is not None)
 
     def load_dictionary(self, dictionary):
@@ -19,7 +19,7 @@ class SentenceFeaturizer(object):
     def adjust_dictionary(self):
         if self.dictionary is None:
             return
-        if self.opts['egocentric_coordinates']:
+        if self.opts.get('egocentric_coordinates'):
             vrange = self.opts['visible_range']
             for s in range(-vrange+1,vrange):
                 for t in range(-vrange+1,vrange):
@@ -35,7 +35,7 @@ class SentenceFeaturizer(object):
                 # TODO: handle it correctly
                 return None
         else:
-            if self.opts['egocentric_coordinates']:
+            if self.opts.get('egocentric_coordinates'):
                 loc = (item_loc[0]-agent_loc[0], item_loc[1]-agent_loc[1])
                 if abs(loc[0]) < self.opts['visible_range'] and abs(loc[1]) < self.opts['visible_range']:
                     if self.opts.get('separate_loc'):

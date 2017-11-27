@@ -35,7 +35,7 @@ class GridFeaturizer(SentenceFeaturizer):
     def to_tensor(self, game, agent = None):
         vocab = self.dictionary['vocab']
         S = self.to_sentence(game, agent = agent)
-        if self.opts['egocentric_coordinates']:
+        if self.opts.get('egocentric_coordinates'):
             x = torch.zeros(self.opts['visible_range']*2-1, 
                             self.opts['visible_range']*2-1, len(vocab))
         else:

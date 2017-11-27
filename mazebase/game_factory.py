@@ -19,7 +19,7 @@ def add_absolute_loc_vocab(vocab, game_opts):
 
 # default range option is specified as 
 # [current_min, current_max, min_max, max_max, increment]
-# min_max,, max_max, and increment are only used in curriculum
+# min_max, max_max, and increment are only used in curriculum
 
 def generate_opts(gopts):
     opts = {}
@@ -37,18 +37,22 @@ def generate_opts(gopts):
 
 class GameFactory(object):
     def __init__(self, game_name, game_opts, game):
-        g = {
-            'game_opts': game_opts,
-            'game': game,
-            'opts_generator': generate_opts
-        }
-        g['counters'] = {}
-        g['required_opts'] = ['map_width','map_height']
-        self.games = {game_name: g}        
-        self.reset_counters(game_name)
-        self.ivocab = self.all_vocab(game_opts)
-        self.iactions = self.all_actions(game_opts)
-        self.sort_vocabs()
+        if game_name is None:
+            self.empty = True
+        else:
+            self.empty = False
+            g = {
+                'game_opts': game_opts,
+                'game': game,
+                'opts_generator': generate_opts
+            }
+            g['counters'] = {}
+            g['required_opts'] = ['map_width','map_height']
+            self.games = {game_name: g}        
+            self.reset_counters(game_name)
+            self.ivocab = self.all_vocab(game_opts)
+            self.iactions = self.all_actions(game_opts)
+            self.sort_vocabs()
 
     def sort_vocabs(self):
         self.ivocab.sort()
@@ -64,7 +68,7 @@ class GameFactory(object):
         opts = g['opts_generator'](g['game_opts'])
         game = g['game'](opts)
         game.factory_name = gname
-        return 
+        return game
 
     def init_random_game(self):
         gname = random.choice(list(self.games.keys()))
@@ -171,6 +175,10 @@ class GameFactory(object):
         
 
     def __add__(self, other):
+        if other.empty:
+            return self
+        if self.empty:
+            return other
         for i in other.games:
             if not self.games.get(i):
                 self.games[i] = other.games[i]

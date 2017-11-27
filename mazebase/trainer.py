@@ -1,0 +1,201 @@
+import torch
+from torch import optim
+from torch.autograd import Variable
+
+from collections import namedtuple
+from itertools import count
+import random
+#import gym
+
+import visdom
+import numpy as np
+import action_utils
+#from multi_threading import *
+
+
+
+Transition = namedtuple('Transition', ('state', 'action', 'mask', 'next_state',
+                                       'reward'))
+def multinomials_log_density(actions, log_probs):
+    log_prob = 0
+    for i in range(len(log_probs)):
+        log_prob += log_probs[i].gather(1, actions[:, i].long().unsqueeze(1))
+    return log_prob
+
+
+class Memory(object):
+    def __init__(self):
+        self.memory = []
+
+    def push(self, *args):
+        """Saves a transition."""
+        self.memory.append(Transition(*args))
+
+    def sample(self):
+        return Transition(*zip(*self.memory))
+
+    def __len__(self):
+        return len(self.memory)
+
+class EpisodeRunner(object):
+    def __init__(self, env, policy_net, value_net, args):
+        self.env = env
+#        self.test = mp.Event()
+#        self.test.clear()
+        self.display = False
+        self.policy_net = policy_net
+        #fixme
+        self.value_net = value_net
+        self.args = args
+
+    def quit(self):
+        pass
+    
+    def reset(self):
+        pass
+    
+    def get_episode(self):
+        env = self.env
+        policy_net = self.policy_net
+        args = self.args
+#        if self.test.is_set():
+#            env.should_test = True
+        episode = []
+        state = self.env.reset()
+        if self.display:
+            env.display()
+        for t in range(args.max_steps):
+            action = action_utils.select_action(args, policy_net, state)
+            action, actual = action_utils.translate_action(args, env, action)
+            next_state, reward, done, _ = env.step(actual)
+            if self.display:
+                env.display()
+            mask = 1
+            done = done or t == args.max_steps - 1
+            if done:
+                mask = 0
+            episode.append([state, np.array([action]), mask, next_state, reward])
+            state = next_state
+            if done:
+                break
+        return (episode, (0, 0, 0), True, dict())
+    
+
+class Trainer:
+    def __init__(self, runner, optimizer, args):
+        self.i_episode = 0
+        self.num_test_steps = 0
+        self.num_total_steps = 0
+        self.args = args
+        self.runner = runner
+        self.optimizer = optimizer
+        LogField = namedtuple('LogField', ('data', 'plot', 'x_axis'))
+        log = dict()
+        log['#batch'] = LogField(list(), False, '')
+        log['reward'] = LogField(list(), True, '#batch')
+        self.log = log
+    def run(self, num_iteration):
+        args = self.args
+        runner = self.runner
+        log = self.log
+        for iter_ind in range(num_iteration):
+            memory = Memory()
+            num_steps = 0
+            reward_batch = 0
+            num_batch = 0
+            num_episodes = 0
+            while num_steps < args.batch_size:
+                if num_steps == 0:
+                    # discard episodes in buffer since model has changed
+                    runner.reset()
+                episode, term_rewards, test_mode, stat = runner.get_episode()
+                t = len(episode)
+                num_steps += (t+1)
+                self.num_total_steps += (t+1)
+                num_episodes += 1
+                reward_sum = sum(x[4] for x in episode)
+                br = term_rewards[1]
+                episode[-1][4] += br
+                reward_batch += br + reward_sum
+                num_batch += 1
+                self.num_test_steps += (t+1)
+                for tup in episode:
+                    memory.push(*tup)
+
+            reward_batch /= num_batch
+            batch = memory.sample()
+            #fixme value net
+            update_params(batch, runner.policy_net, 
+                          runner.value_net, self.optimizer, args)
+            runner.reset()
+
+            if self.i_episode % args.log_interval == 0:
+                np.set_printoptions(precision=4)
+                print('Episode {}\tTestSteps {}\tLast reward: {:10.4f}\tAverage reward {:10.4f}'.format(
+                    self.i_episode, self.num_test_steps, reward_sum, reward_batch
+                ))
+                log['#batch'].data.append(self.i_episode)
+                log['reward'].data.append(reward_batch)
+                if args.plot:
+                    for k, v in log.items():
+                        if v.plot:
+                            vis.line(np.asarray(v.data), np.asarray(log[v.x_axis].data),
+                            win=k, opts=dict(xlabel=v.x_axis, ylabel=k))
+
+#fixme                    
+#            if self.num_test_steps > args.max_test_steps:
+#                break
+            
+            self.i_episode += 1
+        
+def update_params(batch, policy_net, value_net, optimizer, args):
+    # print("Updating params..")
+    rewards = torch.Tensor(batch.reward)
+    masks = torch.Tensor(batch.mask)
+    actions = torch.from_numpy(np.concatenate(batch.action, 0))
+    states = torch.from_numpy(np.stack(batch.state, axis = 0))
+    states = Variable(states, requires_grad=False)
+    values = value_net(states)
+
+    returns = torch.Tensor(actions.size(0),1)
+    deltas = torch.Tensor(actions.size(0),1)
+    advantages = torch.Tensor(actions.size(0),1)
+
+    prev_return = 0
+    prev_value = 0
+    prev_advantage = 0
+    for i in reversed(range(rewards.size(0))):
+        returns[i] = rewards[i] + args.gamma * prev_return * masks[i]
+        deltas[i] = rewards[i] + args.gamma * prev_value * masks[i] - values.data[i]
+        advantages[i] = deltas[i] + args.gamma * args.tau * prev_advantage * masks[i]
+
+        prev_return = returns[i, 0]
+        prev_value = values.data[i]
+        prev_advantage = advantages[i, 0]
+
+    targets = Variable(returns).squeeze()
+
+    if args.normalize_rewards:
+        advantages = (advantages - advantages.mean()) / advantages.std()
+    
+    optimizer.zero_grad()
+    log_p_a = policy_net(states)
+    log_prob = multinomials_log_density(Variable(actions, requires_grad=False), log_p_a)
+    action_loss = -Variable(advantages, requires_grad=False) * log_prob
+    action_loss = action_loss.mean()
+
+    values_ = value_net(states).squeeze()
+    value_loss = (values_ - targets).pow(2).mean()
+    
+    loss = action_loss + 0.05 * value_loss
+    
+    # entropy regularization
+    if args.entr > 0:
+        entropy = 0
+        for i in range(len(log_p_a)):
+            entropy -= (log_p_a[i] * log_p_a[i].exp()).sum(1).mean()
+        loss -= args.entr * entropy
+
+    loss.backward()
+    optimizer.step()
+

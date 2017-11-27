@@ -1,21 +1,18 @@
 import torch
-from torch import optim
 from torch.autograd import Variable
 
 from collections import namedtuple
 from itertools import count
 import random
-#import gym
 
 import visdom
 import numpy as np
 import action_utils
 #from multi_threading import *
 
-
-
 Transition = namedtuple('Transition', ('state', 'action', 'mask', 'next_state',
                                        'reward'))
+                                       
 def multinomials_log_density(actions, log_probs):
     log_prob = 0
     for i in range(len(log_probs)):
@@ -40,8 +37,6 @@ class Memory(object):
 class EpisodeRunner(object):
     def __init__(self, env, policy_net, value_net, args):
         self.env = env
-#        self.test = mp.Event()
-#        self.test.clear()
         self.display = False
         self.policy_net = policy_net
         #fixme
@@ -58,8 +53,6 @@ class EpisodeRunner(object):
         env = self.env
         policy_net = self.policy_net
         args = self.args
-#        if self.test.is_set():
-#            env.should_test = True
         episode = []
         state = self.env.reset()
         if self.display:
@@ -67,7 +60,7 @@ class EpisodeRunner(object):
         for t in range(args.max_steps):
             action = action_utils.select_action(args, policy_net, state)
             action, actual = action_utils.translate_action(args, env, action)
-            next_state, reward, done, _ = env.step(actual)
+            next_state, reward, done = env.step(actual)
             if self.display:
                 env.display()
             mask = 1
@@ -78,13 +71,12 @@ class EpisodeRunner(object):
             state = next_state
             if done:
                 break
-        return (episode, (0, 0, 0), True, dict())
+        return episode
     
 
 class Trainer:
     def __init__(self, runner, optimizer, args):
-        self.i_episode = 0
-        self.num_test_steps = 0
+        self.i_iter = 0
         self.num_total_steps = 0
         self.args = args
         self.runner = runner
@@ -94,6 +86,9 @@ class Trainer:
         log['#batch'] = LogField(list(), False, '')
         log['reward'] = LogField(list(), True, '#batch')
         self.log = log
+        if args.plot:
+            self.vis = visdom.Visdom(env=args.plot_env)
+
     def run(self, num_iteration):
         args = self.args
         runner = self.runner
@@ -108,17 +103,13 @@ class Trainer:
                 if num_steps == 0:
                     # discard episodes in buffer since model has changed
                     runner.reset()
-                episode, term_rewards, test_mode, stat = runner.get_episode()
+                episode = runner.get_episode()
                 t = len(episode)
                 num_steps += (t+1)
                 self.num_total_steps += (t+1)
                 num_episodes += 1
-                reward_sum = sum(x[4] for x in episode)
-                br = term_rewards[1]
-                episode[-1][4] += br
-                reward_batch += br + reward_sum
+                reward_batch += sum(x[4] for x in episode)
                 num_batch += 1
-                self.num_test_steps += (t+1)
                 for tup in episode:
                     memory.push(*tup)
 
@@ -129,26 +120,21 @@ class Trainer:
                           runner.value_net, self.optimizer, args)
             runner.reset()
 
-            if self.i_episode % args.log_interval == 0:
+            if self.i_iter % args.log_interval == 0:
                 np.set_printoptions(precision=4)
-                print('Episode {}\tTestSteps {}\tLast reward: {:10.4f}\tAverage reward {:10.4f}'.format(
-                    self.i_episode, self.num_test_steps, reward_sum, reward_batch
+                print('Iteration {}\tSteps {}\tAverage reward {:10.4f}'.format(
+                    self.i_iter, self.num_total_steps, reward_batch
                 ))
-                log['#batch'].data.append(self.i_episode)
+                log['#batch'].data.append(self.i_iter)
                 log['reward'].data.append(reward_batch)
                 if args.plot:
                     
                     for k, v in log.items():
                         if v.plot:
-                            vis = visdom.Visdom(env=args.plot_env)
-                            vis.line(np.asarray(v.data), np.asarray(log[v.x_axis].data),
+                            self.vis.line(np.asarray(v.data), np.asarray(log[v.x_axis].data),
                             win=k, opts=dict(xlabel=v.x_axis, ylabel=k))
-
-#fixme                    
-#            if self.num_test_steps > args.max_test_steps:
-#                break
             
-            self.i_episode += 1
+            self.i_iter += 1
         
 def update_params(batch, policy_net, value_net, optimizer, args):
     # print("Updating params..")

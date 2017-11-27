@@ -15,11 +15,7 @@ class MazeBaseWrapper(object):
             
     @property
     def num_actions(self):
-        return len(self.factory.actions)
-
-    @property
-    def dim_actions(self):
-        return 1
+        return [len(self.factory.actions)]
     
     def get_obs(self):
         #FIXME?  what about multi agent?
@@ -39,7 +35,7 @@ class MazeBaseWrapper(object):
         obs = self.get_obs()
         done = not self.env.is_active()
         r = self.env.get_reward()
-        return (obs, r, done, None)
+        return (obs, r, done)
     
     def display(self):
         self.env.display_ascii()

@@ -2,11 +2,6 @@ import numpy as np
 import torch
 from torch.autograd import Variable
 
-def parse_action_args(args):
-    # environment takes discrete action
-    assert args.dim_actions == 1
-    args.naction_heads = [args.num_actions]
-
 def select_action(args, policy_net, state):
     state = torch.from_numpy(state).unsqueeze(0)
     state = Variable(state, volatile=True)

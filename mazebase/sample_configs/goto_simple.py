@@ -19,10 +19,10 @@ def game_opts():
     go['static'] = static_opts
 
     range_opts = {}
-    range_opts['map_width'] = (5, 5, 5, 5, 1)
-    range_opts['map_height'] = (5, 5, 5, 5, 1)
-    range_opts['nblocks'] = (0, 0, 1, 5, 1)
-    range_opts['nwater'] = (0, 0, 1, 5, 1)
+    range_opts['map_width'] = (5, 10, 1, 10, 1)
+    range_opts['map_height'] = (5, 10, 1, 10, 1)
+    range_opts['nblocks'] = (1, 5, 1, 5, 1)
+    range_opts['nwater'] = (1, 5, 1, 5, 1)
     go['range'] = range_opts
 
     go['featurizer'] = game_opts['featurizer']

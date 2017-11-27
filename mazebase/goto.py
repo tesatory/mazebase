@@ -27,7 +27,7 @@ class Game(gg.GridGame2D):
         super(Game, self).update()
         location = self.goal_loc
         if (self.agent.attr['loc'][0] == location[0]
-                and self.agent.attr['loc'][0] == location[0]):
+                and self.agent.attr['loc'][1] == location[1]):
             self.finished = True
 
     def get_reward(self):

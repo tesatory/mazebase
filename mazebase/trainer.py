@@ -137,8 +137,10 @@ class Trainer:
                 log['#batch'].data.append(self.i_episode)
                 log['reward'].data.append(reward_batch)
                 if args.plot:
+                    
                     for k, v in log.items():
                         if v.plot:
+                            vis = visdom.Visdom(env=args.plot_env)
                             vis.line(np.asarray(v.data), np.asarray(log[v.x_axis].data),
                             win=k, opts=dict(xlabel=v.x_axis, ylabel=k))
 

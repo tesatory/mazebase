@@ -16,7 +16,7 @@ import mazebase.trainer as trainer
 import mazebase.env_wrapper as env_wrapper
 #this needs to be renamed or moved
 import mazebase.models as models
-# don't really need torch here
+import mazebase.multi_threaded_trainer as tt
 from mazebase.torch_featurizers import GridFeaturizer
 
 def load_config(config_path):
@@ -56,7 +56,6 @@ parser.add_argument('--config_path', default="config/test.py",
 parser.add_argument('--max_steps', default=20, type=int, help='force to end the game after this many steps')
 parser.add_argument('--num_iterations', default=10000, type=int, help='number of episodes')
 parser.add_argument('--nactions', default='1', type=str, help='the number of agent actions (1 for contineous). Use N:M:K for multiple actions')
-parser.add_argument('--action_scale', default=1.0, type=float, help='scale action output from model')
 parser.add_argument('--plot', action='store_true', default=False,
                     help='plot training progress')
 parser.add_argument('--plot_env', default='main', type=str, help='plot env name')
@@ -98,13 +97,13 @@ optimizer = optim.RMSprop(torch.nn.ModuleList([policy_net, value_net]).parameter
     lr = args.lrate, alpha=0.97, eps=1e-6)
 
                 
-#if args.nthreads > 1:               
-#    runner = ThreadedEpisodeRunner(args, lambda: EpisodeRunner(data.init(args.env_name, args)))
-#else:
-#    runner = EpisodeRunner(data.init(args.env_name, args))
+if args.nthreads > 1:               
+    def build_eprunner(): 
+        return trainer.EpisodeRunner(env, policy_net, value_net, args)
 
-runner = trainer.EpisodeRunner(env, policy_net, value_net, args)
-trainer = trainer.Trainer(runner, optimizer, args)
+    runner = tt.ThreadedEpisodeRunner(args, build_eprunner)
+else:
+    runner = trainer.EpisodeRunner(env, policy_net, value_net, args)
 
-
-trainer.run(args.num_iterations)
+playground = trainer.Trainer(runner, optimizer, args)
+playground.run(args.num_iterations)

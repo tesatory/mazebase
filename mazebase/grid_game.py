@@ -178,10 +178,11 @@ class GridGame2D(object):
         width = self.mapsize[0]
         height = self.mapsize[1]
         ''' Displays the game map for visualization '''
-        for i in self.items_bytype['info']:
-            words = {k: v for k, v in i.attr.items() if type(v) == int}
-            swords = sorted(words, key=words.get)
-            print(' '.join(swords))
+        if 'info' in self.items_bytype: 
+            for i in self.items_bytype['info']:
+                words = {k: v for k, v in i.attr.items() if type(v) == int}
+                swords = sorted(words, key=words.get)
+                print(' '.join(swords))
         cprint(' ' * (width + 2) * 3, None, 'on_white')
         for y in reversed(range(height)):
             cprint(str(y).center(3), 'red', 'on_white', end="")

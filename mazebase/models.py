@@ -15,7 +15,7 @@ class Policy(nn.Module):
     def forward(self, x):
         x = F.tanh(self.affine1(x))
         x = F.tanh(self.affine2(x))
-        return [F.log_softmax(head(x), 1) for head in self.heads]
+        return [F.log_softmax(head(x)) for head in self.heads]
 
 
 class ActionValueModel(nn.Module):

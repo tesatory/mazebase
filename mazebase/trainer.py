@@ -106,8 +106,7 @@ class Trainer:
             gpu_value = copy.deepcopy(runner.value_net)
             gpu_policy.cuda()
             gpu_value.cuda()
-            self.optimizer.param_groups = []
-            self.optimizer.add_param_group({'params': torch.nn.ModuleList([gpu_policy, gpu_value]).parameters()})
+            self.optimizer.param_groups = [{'params': torch.nn.ModuleList([gpu_policy, gpu_value]).parameters()}]
         for iter_ind in range(num_iteration):
             memory = Memory()
             num_steps = 0

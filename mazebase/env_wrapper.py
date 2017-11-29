@@ -7,11 +7,14 @@ class MazeBaseWrapper(object):
         self.factory = factory
         self.featurizer = featurizer
         self.env = self.factory.init_random_game()
-
+        self.args = args
     @property
     def observation_dim(self):
         obs = self.get_obs()
-        return obs.size
+        if self.args.__NUMPY__:
+            return obs.size
+        else:
+            return obs.size(0)
             
     @property
     def num_actions(self):
@@ -19,8 +22,12 @@ class MazeBaseWrapper(object):
     
     def get_obs(self):
         #FIXME?  what about multi agent?
+
         obs = self.featurizer.to_tensor(self.env, self.env.agent)
-        obs = obs.view(-1).numpy()
+        if self.args.__NUMPY__:
+            obs = obs.view(-1).numpy()
+        else:
+            obs = obs.view(-1)
         return obs
 
     def reset(self):

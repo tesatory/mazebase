@@ -71,7 +71,10 @@ class EpisodeRunner(object):
             done = done or t == args.max_steps - 1
             if done:
                 mask = 0
-            episode.append([state, np.array([action]), mask, next_state, reward])
+            if args.__NUMPY__:
+                episode.append([state, np.array([action]), mask, next_state, reward])
+            else:
+                episode.append([state, action, mask, next_state, reward])
             state = next_state
             if done:
                 break
@@ -79,12 +82,13 @@ class EpisodeRunner(object):
     
 
 class Trainer:
-    def __init__(self, runner, optimizer, args):
+    def __init__(self, runner, optimizer, args, batchifier = None):
         self.i_iter = 0
         self.num_total_steps = 0
         self.args = args
         self.runner = runner
         self.optimizer = optimizer
+        self.batchifier = None
         LogField = namedtuple('LogField', ('data', 'plot', 'x_axis'))
         log = dict()
         log['#batch'] = LogField(list(), False, '')
@@ -97,6 +101,7 @@ class Trainer:
         args = self.args
         runner = self.runner
         log = self.log
+        batchifier = self.batchifier
         if self.args.gpu:
             gpu_policy = copy.deepcopy(runner.policy_net)
             gpu_value = copy.deepcopy(runner.value_net)
@@ -129,11 +134,11 @@ class Trainer:
             if self.args.gpu:
                 gpu_policy.load_state_dict(runner.policy_net.state_dict())
                 gpu_value.load_state_dict(runner.value_net.state_dict())
-                update_params(batch, gpu_policy, gpu_value, self.optimizer, args)
+                update_params(batch, batchifier, gpu_policy, gpu_value, self.optimizer, args)
                 runner.policy_net.load_state_dict(gpu_policy.state_dict())
                 runner.value_net.load_state_dict(gpu_value.state_dict())
             else:
-                update_params(batch, runner.policy_net, 
+                update_params(batch, batchifier, runner.policy_net, 
                               runner.value_net, self.optimizer, args)
             runner.reset()
 
@@ -153,12 +158,21 @@ class Trainer:
             
             self.i_iter += 1
         
-def update_params(batch, policy_net, value_net, optimizer, args):
+def update_params(batch, batchifier, policy_net, value_net, optimizer, args):
     # print("Updating params..")
     rewards = torch.Tensor(batch.reward)
     masks = torch.Tensor(batch.mask)
-    actions = torch.from_numpy(np.concatenate(batch.action, 0))
-    states = torch.from_numpy(np.stack(batch.state, axis = 0))
+    if args.__NUMPY__:
+        actions = torch.from_numpy(np.concatenate(batch.action, 0))
+    else:
+        actions = torch.Tensor(batch.action)
+    if batchifier is None:
+        if args.__NUMPY__:
+            states = torch.from_numpy(np.stack(batch.state, axis = 0))
+        else:
+            states = torch.stack(batch.state, 0)
+    else:
+        states = batchifier(batch)
     if args.gpu:
         states = states.cuda()
         actions = actions.cuda()

@@ -6,6 +6,14 @@ from __future__ import print_function
 from mazebase.featurizer import SentenceFeaturizer
 import torch
 
+
+#assumes numpy batches for now, FIXME when
+#training loop fixed
+def SparseSentenceBatchifier(batch):
+    state_lengths = torch.LongTensor(len(batch)).zero_()
+#    words = 
+
+
 #to be fed into e.g. nn.EmbeddingBag
 class SparseSentenceFeaturizer(SentenceFeaturizer):
     def __init__(self, opts, dictionary = None):
@@ -15,23 +23,28 @@ class SparseSentenceFeaturizer(SentenceFeaturizer):
     def to_tensor(self, game, agent = None):
         X = self.to_sentence(game, agent = agent)
         N = len(X)
-        item_lengths = torch.LongTensor(N)
+        item_starts = torch.LongTensor(N)
         x = torch.LongTensor(0)
         vocab = self.dictionary['vocab']
         count = 0
+        starts = 0
         for item in X:
-            item_lengths[count] = len(item)
+            item_starts[count] = starts
             count += 1
+            starts += len(item)
             lx = torch.LongTensor([vocab[j] for j in item])
             x = torch.cat((x,lx))
-        return x, item_lengths
+        return x, item_starts
+
+
+
 
 # returns a tensor of size Height x Width x VocabSize
 class GridFeaturizer(SentenceFeaturizer):
     def __init__(self, opts, dictionary = None):
         opts['separate_loc'] = True
         super(GridFeaturizer, self).__init__(opts, dictionary = dictionary)
-                                                       
+
     def to_tensor(self, game, agent = None):
         vocab = self.dictionary['vocab']
         S = self.to_sentence(game, agent = agent)
@@ -46,6 +59,8 @@ class GridFeaturizer(SentenceFeaturizer):
             for w in item:
                 x[loc[0]][loc[1]][vocab[w]] += 1
         return x
+    
+        
             
 
 if __name__ == '__main__':

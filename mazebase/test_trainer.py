@@ -59,6 +59,9 @@ parser.add_argument('--plot', action='store_true', default=False,
 parser.add_argument('--plot_env', default='main', type=str, help='plot env name')
 
 args = parser.parse_args()
+
+args.__NUMPY__ = True
+
 print(args)
 
 LogField = namedtuple('LogField', ('data', 'plot', 'x_axis'))

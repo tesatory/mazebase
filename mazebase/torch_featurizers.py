@@ -5,13 +5,51 @@ from __future__ import print_function
 
 from mazebase.featurizer import SentenceFeaturizer
 import torch
+#FIXME when numpy not needed for multithreading
+import numpy as np
+
+
+# this inputs tensors
+# l0, l1, ... , lk and a0, a1, ... ak  
+# and builds a sum_i a_i tensor 
+# 0 0 .. 0 l0 l0 ... l0 l0+l1 ...
+# where term i is repeated a_i times   
+def expand_offsets(l,a):
+    s = a.sum()
+    u = torch.LongTensor(s).zero_()
+    acs = a.cumsum(0)
+    u[acs[:-1]] = l[:-1]
+    return u.cumsum(0)
+
+
+# this inputs a tensor
+# l0, l1, ... , lk
+# and builds a sum_i l_i tensor 
+# 0 0 .. 0 1 1 ... 1 2 2...
+# where term i is repeated l_i times   
+def expand_ids(l):
+    s = l.sum()
+    u = torch.LongTensor(s).zero_()
+    lcs = l.cumsum(0)
+    u[lcs[:-1]] = 1
+    return u.cumsum(0)
+
 
 
 #assumes numpy batches for now, FIXME when
 #training loop fixed
-def SparseSentenceBatchifier(batch):
-    state_lengths = torch.LongTensor(len(batch)).zero_()
-#    words = 
+def SparseSentenceBatchifier(batched_state):
+    states = list(zip(*batched_state))
+    words = states[0]
+    starts = states[1]
+    lw = torch.LongTensor([len(i) for i in words])
+    ls = torch.LongTensor([len(i) for i in starts])
+    offsets = expand_offsets(lw, ls)
+    ids = expand_ids(ls)
+    words = torch.from_numpy(np.concatenate(words,axis = 0))
+    starts = torch.from_numpy(np.concatenate(starts,axis = 0))
+    starts += offsets
+    return [words, starts, ids, ls]
 
 
 #to be fed into e.g. nn.EmbeddingBag
@@ -34,7 +72,7 @@ class SparseSentenceFeaturizer(SentenceFeaturizer):
             starts += len(item)
             lx = torch.LongTensor([vocab[j] for j in item])
             x = torch.cat((x,lx))
-        return x, item_starts
+        return [x, item_starts]
 
 
 

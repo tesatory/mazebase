@@ -62,6 +62,7 @@ class EpisodeRunner(object):
         if self.display:
             env.display()
         for t in range(args.max_steps):
+            #TODO get rid of action_utils
             action = action_utils.select_action(args, policy_net, state)
             action, actual = action_utils.translate_action(args, env, action)
             next_state, reward, done = env.step(actual)
@@ -88,7 +89,7 @@ class Trainer:
         self.args = args
         self.runner = runner
         self.optimizer = optimizer
-        self.batchifier = None
+        self.batchifier = batchifier
         LogField = namedtuple('LogField', ('data', 'plot', 'x_axis'))
         log = dict()
         log['#batch'] = LogField(list(), False, '')
@@ -130,6 +131,7 @@ class Trainer:
 
             reward_batch /= num_batch
             batch = memory.sample()
+
             #fixme value net
             if self.args.gpu:
                 gpu_policy.load_state_dict(runner.policy_net.state_dict())
@@ -172,11 +174,15 @@ def update_params(batch, batchifier, policy_net, value_net, optimizer, args):
         else:
             states = torch.stack(batch.state, 0)
     else:
-        states = batchifier(batch)
+        states = batchifier(batch.state)
     if args.gpu:
         states = states.cuda()
         actions = actions.cuda()
-    states = Variable(states, requires_grad=False)
+    if type(states) == list:
+        for i,j in enumerate(states):
+            states[i] = Variable(j, requires_grad = False)
+    else:
+        states = Variable(states, requires_grad = False)
     values = value_net(states)
 
     returns = torch.Tensor(actions.size(0),1)

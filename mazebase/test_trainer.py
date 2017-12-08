@@ -4,6 +4,10 @@ from __future__ import unicode_literals
 from __future__ import print_function
 
 import torch
+import torch.multiprocessing
+#if __name__ == "__main__":
+#torch.multiprocessing.set_start_method("forkserver")
+
 from torch import optim
 
 import argparse
@@ -15,7 +19,8 @@ import mazebase.env_wrapper as env_wrapper
 #this needs to be renamed or moved
 import mazebase.models as models
 import mazebase.multi_threaded_trainer as tt
-from mazebase.torch_featurizers import GridFeaturizer
+import mazebase.torch_featurizers as tfs
+
 
 def load_config(config_path):
     import importlib.util
@@ -57,6 +62,8 @@ parser.add_argument('--num_iterations', default=10000, type=int, help='number of
 parser.add_argument('--plot', action='store_true', default=False,
                     help='plot training progress')
 parser.add_argument('--plot_env', default='main', type=str, help='plot env name')
+parser.add_argument('--model_type', default='fc', type=str, help='fc or commnet')
+
 
 args = parser.parse_args()
 
@@ -71,22 +78,29 @@ log['reward'] = LogField(list(), True, '#batch')
 
 
 def env_maker():
-    game_opts, games = load_config(args.config_path)
+    game_opts, games, feat_class = load_config(args.config_path)
     F = gf.GameFactory(None, None, None)
     for g in games:
         F += games[g].Factory(g, game_opts[g], games[g].Game)
-    featurizer = GridFeaturizer(game_opts['featurizer'], F.dictionary)
+    featurizer = feat_class(game_opts['featurizer'], F.dictionary)
     return env_wrapper.MazeBaseWrapper(F, featurizer, args)
-env = env_maker()  # dummy
 
-num_inputs = env.observation_dim
+env = env_maker()
 args.naction_heads = env.num_actions
+
+if args.model_type == 'fc':
+    num_inputs = env.observation_dim
+    policy_net = models.Policy(args, num_inputs)
+    value_net = models.Value(num_inputs)
+    batchifier = None
+elif args.model_type == 'commnet':
+    batchifier = tfs.SparseSentenceBatchifier
+    nwords = len(env.featurizer.dictionary['ivocab'])
+    policy_net = models.Commnet(args, nwords, 1, value_or_policy = 'policy')
+    value_net = models.Commnet(args, nwords, 1, value_or_policy = 'value')
 
 if args.seed >= 0:
     torch.manual_seed(args.seed)
-
-policy_net = models.Policy(args, num_inputs)
-value_net = models.Value(num_inputs)
 
 policy_net.share_memory()
 value_net.share_memory()
@@ -103,5 +117,8 @@ if args.nthreads > 1:
 else:
     runner = trainer.EpisodeRunner(env_maker, policy_net, value_net, args)
 
-playground = trainer.Trainer(runner, optimizer, args)
+
+
+
+playground = trainer.Trainer(runner, optimizer, args, batchifier = batchifier)
 playground.run(args.num_iterations)

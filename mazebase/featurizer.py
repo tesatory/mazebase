@@ -25,7 +25,7 @@ class SentenceFeaturizer(object):
                 for t in range(-vrange+1,vrange):
                     w = 'rx' + str(s) + 'y' + str(t)
                     self.dictionary['ivocab'].append(w)
-                    self.dictionary['vocab'][w] = len(self.dictionary['ivocab'])
+                    self.dictionary['vocab'][w] = len(self.dictionary['ivocab']) - 1
 
     def to_sentence_item(self, item, agent_loc = None):
         s = []

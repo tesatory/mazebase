@@ -10,10 +10,10 @@ import numpy as np
 
 
 # this inputs tensors
-# l0, l1, ... , lk and a0, a1, ... ak  
-# and builds a sum_i a_i tensor 
+# l0, l1, ... , lk and a0, a1, ... ak
+# and builds a sum_i a_i tensor
 # 0 0 .. 0 l0 l0 ... l0 l0+l1 ...
-# where term i is repeated a_i times   
+# where term i is repeated a_i times
 def expand_offsets(l,a):
     s = a.sum()
     u = torch.LongTensor(s).zero_()
@@ -24,9 +24,9 @@ def expand_offsets(l,a):
 
 # this inputs a tensor
 # l0, l1, ... , lk
-# and builds a sum_i l_i tensor 
+# and builds a sum_i l_i tensor
 # 0 0 .. 0 1 1 ... 1 2 2...
-# where term i is repeated l_i times   
+# where term i is repeated l_i times
 def expand_ids(l):
     s = l.sum()
     u = torch.LongTensor(s).zero_()
@@ -35,10 +35,12 @@ def expand_ids(l):
     return u.cumsum(0)
 
 
-
+#todo this should go somewhere else?
 #assumes numpy batches for now, FIXME when
 #training loop fixed
-def SparseSentenceBatchifier(batched_state):
+def SparseSentenceBatchifier(batched_state, numpy = True):
+    #input is [[words_0, item_Starts_0], [words_1, item_starts_1],...]
+    #output is [words, item_starts, idx_of_state_per_item, num_items_in_state]
     states = list(zip(*batched_state))
     words = states[0]
     starts = states[1]
@@ -46,20 +48,24 @@ def SparseSentenceBatchifier(batched_state):
     ls = torch.LongTensor([len(i) for i in starts])
     offsets = expand_offsets(lw, ls)
     ids = expand_ids(ls)
-    words = torch.from_numpy(np.concatenate(words,axis = 0))
-    starts = torch.from_numpy(np.concatenate(starts,axis = 0))
+    if not numpy:
+        words = torch.cat(words, 0)
+        starts = torch.cat(starts, 0)
+    else:
+        words = torch.from_numpy(np.concatenate(words, axis=0))
+        starts = torch.from_numpy(np.concatenate(starts, axis=0))
     starts += offsets
     return [words, starts, ids, ls]
 
 
 #to be fed into e.g. nn.EmbeddingBag
 class SparseSentenceFeaturizer(SentenceFeaturizer):
-    def __init__(self, opts, dictionary = None):
-        super(SparseSentenceFeaturizer, self).__init__(opts, 
-                                                       dictionary = dictionary)
-        
-    def to_tensor(self, game, agent = None):
-        X = self.to_sentence(game, agent = agent)
+    def __init__(self, opts, dictionary=None):
+        super(SparseSentenceFeaturizer, self).__init__(opts,
+                                                       dictionary=dictionary)
+
+    def to_tensor(self, game, agent=None):
+        X = self.to_sentence(game, agent=agent)
         N = len(X)
         item_starts = torch.LongTensor(N)
         x = torch.LongTensor(0)
@@ -74,6 +80,9 @@ class SparseSentenceFeaturizer(SentenceFeaturizer):
             x = torch.cat((x,lx))
         return [x, item_starts]
 
+    def featurize(self, game):
+        return self.to_tensor(game, game.agent)
+
 
 
 
@@ -87,28 +96,31 @@ class GridFeaturizer(SentenceFeaturizer):
         vocab = self.dictionary['vocab']
         S = self.to_sentence(game, agent = agent)
         if self.opts.get('egocentric_coordinates'):
-            x = torch.zeros(self.opts['visible_range']*2-1, 
+            x = torch.zeros(self.opts['visible_range']*2-1,
                             self.opts['visible_range']*2-1, len(vocab))
         else:
             # TODO: or we can get the size from factory
-            x = torch.zeros(self.opts['max_map_sizes'][0], 
+            x = torch.zeros(self.opts['max_map_sizes'][0],
                             self.opts['max_map_sizes'][1], len(vocab))
         for item, loc in S:
             for w in item:
                 x[loc[0]][loc[1]][vocab[w]] += 1
         return x
-    
-        
-            
+
+    def featurize(self, game):
+        return self.to_tensor(game, game.agent)
+
+
+
 
 if __name__ == '__main__':
     import mazebase.goto as goto
     import mazebase.switches as switches
 
     game_opts = {}
-    
+
     featurizer_opts = {}
-    
+
     game_featurizer_opts = {}
     game_featurizer_opts['abs_loc_vocab'] = True
 

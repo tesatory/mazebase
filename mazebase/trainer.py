@@ -2,21 +2,18 @@ import torch
 from torch.autograd import Variable
 
 from collections import namedtuple
-from itertools import count
-import random
 
 import visdom
 import numpy as np
 import action_utils
 #from multi_threading import *
 
-from utils import Timer
 import copy
 
 
 Transition = namedtuple('Transition', ('state', 'action', 'mask', 'next_state',
                                        'reward'))
-                                       
+
 def multinomials_log_density(actions, log_probs):
     log_prob = 0
     for i in range(len(log_probs)):
@@ -49,10 +46,10 @@ class EpisodeRunner(object):
 
     def quit(self):
         pass
-    
+
     def reset(self):
         pass
-    
+
     def get_episode(self):
         env = self.env
         policy_net = self.policy_net
@@ -80,7 +77,7 @@ class EpisodeRunner(object):
             if done:
                 break
         return episode
-    
+
 
 class Trainer:
     def __init__(self, runner, optimizer, args, batchifier = None):
@@ -140,7 +137,7 @@ class Trainer:
                 runner.policy_net.load_state_dict(gpu_policy.state_dict())
                 runner.value_net.load_state_dict(gpu_value.state_dict())
             else:
-                update_params(batch, batchifier, runner.policy_net, 
+                update_params(batch, batchifier, runner.policy_net,
                               runner.value_net, self.optimizer, args)
             runner.reset()
 
@@ -152,14 +149,14 @@ class Trainer:
                 log['#batch'].data.append(self.i_iter)
                 log['reward'].data.append(reward_batch)
                 if args.plot:
-                    
+
                     for k, v in log.items():
                         if v.plot:
                             self.vis.line(np.asarray(v.data), np.asarray(log[v.x_axis].data),
                             win=k, opts=dict(xlabel=v.x_axis, ylabel=k))
-            
+
             self.i_iter += 1
-        
+
 def update_params(batch, batchifier, policy_net, value_net, optimizer, args):
     # print("Updating params..")
     rewards = torch.Tensor(batch.reward)
@@ -208,7 +205,7 @@ def update_params(batch, batchifier, policy_net, value_net, optimizer, args):
 
     if args.normalize_rewards:
         advantages = (advantages - advantages.mean()) / advantages.std()
-    
+
     optimizer.zero_grad()
     log_p_a = policy_net(states)
     log_prob = multinomials_log_density(Variable(actions, requires_grad=False), log_p_a)
@@ -217,9 +214,9 @@ def update_params(batch, batchifier, policy_net, value_net, optimizer, args):
 
     values_ = value_net(states).squeeze()
     value_loss = (values_ - targets).pow(2).mean()
-    
+
     loss = action_loss + 0.05 * value_loss
-    
+
     # entropy regularization
     if args.entr > 0:
         entropy = 0
@@ -229,4 +226,3 @@ def update_params(batch, batchifier, policy_net, value_net, optimizer, args):
 
     loss.backward()
     optimizer.step()
-

@@ -60,11 +60,11 @@ class Commnet(nn.Module):
         if value_or_policy == 'policy':
             self.heads = nn.ModuleList([nn.Linear(64, o) for o in args.naction_heads])
         else:
-            self.heads = nn.Linear(64,1)
+            self.heads = nn.Linear(64, 1)
     def forward(self, inp):
         x = inp[0]
         item_starts = inp[1]
-        emb = self.embedding(x,item_starts)
+        emb = self.embedding(x, item_starts)
         if len(inp) == 2: #nonbatched
             batch_idx = Variable(torch.LongTensor(item_starts.size(0)).zero_())
             batch_len = Variable(torch.Tensor([item_starts.size(0)]))
@@ -72,14 +72,14 @@ class Commnet(nn.Module):
             batch_idx = inp[2]
             batch_len = inp[3].double()
         for i in range(self.nlayers):
-            m = Variable(torch.zeros(batch_len.size(0),64))
+            m = Variable(torch.zeros(batch_len.size(0), 64))
             m.index_add_(0, batch_idx, emb)
-            if i ==  self.nlayers - 1:
+            if i == self.nlayers - 1:
                 emb = m
-            else: 
+            else:
                 M = m[batch_idx] - emb
                 M /= (batch_len[batch_idx].unsqueeze(1).expand_as(M) - .99999)
-                emb = torch.cat([emb, M],1)
+                emb = torch.cat([emb, M], 1)
                 emb = F.relu(self.affines[i](emb))
 
         if self.value_or_policy == 'policy':

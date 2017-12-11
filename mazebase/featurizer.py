@@ -72,6 +72,9 @@ class SentenceFeaturizer(object):
                 s.append(w)
         return s
 
+    def featurize(self, game):
+        return self.to_sentence(game, agent = game.agent)
+
 
 if __name__ == '__main__':
     import mazebase.goto as goto
@@ -129,8 +132,7 @@ if __name__ == '__main__':
     F += switches.Factory('switches', game_opts['switches'],
                           switches.Game)
 
-
-    featurizer_opts = {'egocentric_coordinates':True,'visible_range':5}
+    featurizer_opts = {'egocentric_coordinates': True, 'visible_range': 5}
     SF = SentenceFeaturizer(featurizer_opts, F.dictionary)
     g = F.init_random_game()
     print(SF.to_sentence(g, g.agent))

@@ -67,7 +67,7 @@ parser.add_argument('--model_type', default='fc', type=str, help='fc or commnet'
 
 args = parser.parse_args()
 
-args.__NUMPY__ = True
+args.__NUMPY__ = False
 
 print(args)
 

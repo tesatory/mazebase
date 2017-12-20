@@ -2,7 +2,7 @@ import torch
 from torch.autograd import Variable
 
 from collections import namedtuple
-
+import time
 import visdom
 import numpy as np
 import action_utils
@@ -107,6 +107,7 @@ class Trainer:
             gpu_value.cuda()
             self.optimizer.param_groups = [{'params': torch.nn.ModuleList([gpu_policy, gpu_value]).parameters()}]
         for iter_ind in range(num_iteration):
+            epoch_begin_time = time.time()
             memory = Memory()
             num_steps = 0
             reward_batch = 0
@@ -141,10 +142,11 @@ class Trainer:
                               runner.value_net, self.optimizer, args)
             runner.reset()
 
+            epoch_time = time.time() - epoch_begin_time
             if self.i_iter % args.log_interval == 0:
                 np.set_printoptions(precision=4)
-                print('Iteration {}\tSteps {}\tAverage reward {:10.4f}'.format(
-                    self.i_iter, self.num_total_steps, reward_batch
+                print('Iteration {}\tSteps {}\tAverage reward {:10.4f}\tTime taken {:.2f}s'.format(
+                    self.i_iter, self.num_total_steps, reward_batch, epoch_time
                 ))
                 log['#batch'].data.append(self.i_iter)
                 log['reward'].data.append(reward_batch)

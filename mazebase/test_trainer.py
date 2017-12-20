@@ -5,8 +5,11 @@ from __future__ import print_function
 
 import torch
 import torch.multiprocessing
-#if __name__ == "__main__":
-#torch.multiprocessing.set_start_method("forkserver")
+
+# the reason for this flag is because python seems to be mega-slow with the linux-default of
+# file-descriptor based sharing in pytorch. The actual cause was tracked down python internals, where
+# python.multiprocessing.resource_sharer.DupFd.detach() is unbearably slow
+torch.multiprocessing.set_sharing_strategy('file_system')
 
 from torch import optim
 
@@ -67,7 +70,7 @@ parser.add_argument('--model_type', default='fc', type=str, help='fc or commnet'
 
 args = parser.parse_args()
 
-args.__NUMPY__ = True
+args.__NUMPY__ = False
 
 print(args)
 

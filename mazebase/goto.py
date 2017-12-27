@@ -6,6 +6,7 @@ from __future__ import print_function
 import mazebase.grid_game as gg
 import mazebase.grid_item as gi
 import mazebase.game_factory as gf
+import mazebase.distance_utils as dut
 
 
 class Game(gg.GridGame2D):
@@ -35,12 +36,23 @@ class Game(gg.GridGame2D):
         r += self.agent.touch_cost()
         return r
 
+    def get_supervision(self, featurizer):
+        gloc = self.goal_loc
+        p, _ = dut.dijkstra_touch_cost(self, self.agent.attr['loc'], gloc)
+        path = dut.collect_path(p, gloc)
+        actions = dut.path_to_actions(path)
+        states = []
+        for a in actions:
+            states.append(featurizer.featurize(self))
+            self.act(a)
+            self.update()
+        return list(zip(states, actions))
 
 class Factory(gf.GameFactory):
     def __init__(self, game_name, game_opts, Game):
         super(Factory, self).__init__(game_name, game_opts, Game)
-        ro = ('map_width', 'map_height', 'step_cost', 'nblocks', 'nwater', 
-              'water_cost','fixed_goal')
+        ro = ('map_width', 'map_height', 'step_cost', 'nblocks', 'nwater',
+              'water_cost', 'fixed_goal')
         self.games[game_name]['required_opts'] = ro
 
     def all_vocab(self, game_opts):
@@ -73,6 +85,7 @@ class Factory(gf.GameFactory):
 
 
 if __name__ == '__main__':
+    import mazebase.featurizer as sf
     opts = {
         'map_width': 10,
         'map_height': 10,
@@ -81,3 +94,11 @@ if __name__ == '__main__':
         'nwater': 3
     }
     g = Game(opts)
+    F = Factory('goto',
+                {'static': {'map_width': 10, 'map_height': 10, 'step_cost': -.1,
+                            'nblocks': 5, 'nwater': 5, 'water_cost': -.2,
+                            'fixed_goal': False}, 'featurizer': {}},
+                Game)
+    feat = sf.SentenceFeaturizer({'egocentric_coordinates': True,
+                                  'visible_range': 5},
+                                 F.dictionary)

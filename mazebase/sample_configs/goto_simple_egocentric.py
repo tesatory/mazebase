@@ -1,11 +1,13 @@
 import mazebase.goto as goto
-from mazebase.torch_featurizers import GridFeaturizer
+from mazebase.torch_featurizers import SparseSentenceFeaturizer
 
 def game_opts():
-    featurizer_class = GridFeaturizer
+    featurizer_class = SparseSentenceFeaturizer
     games = {}
     game_opts = {}
-    game_opts['featurizer'] = {}
+    game_opts['featurizer'] = {'egocentric_coordinates':True, 
+                               'separate_loc':False,
+                               'visible_range':8 }
     shared_static_opts = {}
     shared_static_opts['step_cost'] = -.1
     shared_static_opts['water_cost'] = -.2
@@ -21,8 +23,8 @@ def game_opts():
     go['static'] = static_opts
 
     range_opts = {}
-    range_opts['map_width'] = (5, 10, 1, 10, 1)
-    range_opts['map_height'] = (5, 10, 1, 10, 1)
+    range_opts['map_width'] = (5, 10, 5, 10, 1)
+    range_opts['map_height'] = (5, 10, 5, 10, 1)
     range_opts['nblocks'] = (1, 1, 1, 5, 1)
     range_opts['nwater'] = (1, 1, 1, 5, 1)
     go['range'] = range_opts

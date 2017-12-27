@@ -2,21 +2,18 @@ import torch
 from torch.autograd import Variable
 
 from collections import namedtuple
-from itertools import count
-import random
-
+import time
 import visdom
 import numpy as np
 import action_utils
 #from multi_threading import *
 
-from utils import Timer
 import copy
 
 
 Transition = namedtuple('Transition', ('state', 'action', 'mask', 'next_state',
                                        'reward'))
-                                       
+
 def multinomials_log_density(actions, log_probs):
     log_prob = 0
     for i in range(len(log_probs)):
@@ -49,10 +46,10 @@ class EpisodeRunner(object):
 
     def quit(self):
         pass
-    
+
     def reset(self):
         pass
-    
+
     def get_episode(self):
         env = self.env
         policy_net = self.policy_net
@@ -62,6 +59,7 @@ class EpisodeRunner(object):
         if self.display:
             env.display()
         for t in range(args.max_steps):
+            #TODO get rid of action_utils
             action = action_utils.select_action(args, policy_net, state)
             action, actual = action_utils.translate_action(args, env, action)
             next_state, reward, done = env.step(actual)
@@ -79,7 +77,7 @@ class EpisodeRunner(object):
             if done:
                 break
         return episode
-    
+
 
 class Trainer:
     def __init__(self, runner, optimizer, args, batchifier = None):
@@ -88,7 +86,7 @@ class Trainer:
         self.args = args
         self.runner = runner
         self.optimizer = optimizer
-        self.batchifier = None
+        self.batchifier = batchifier
         LogField = namedtuple('LogField', ('data', 'plot', 'x_axis'))
         log = dict()
         log['#batch'] = LogField(list(), False, '')
@@ -109,6 +107,7 @@ class Trainer:
             gpu_value.cuda()
             self.optimizer.param_groups = [{'params': torch.nn.ModuleList([gpu_policy, gpu_value]).parameters()}]
         for iter_ind in range(num_iteration):
+            epoch_begin_time = time.time()
             memory = Memory()
             num_steps = 0
             reward_batch = 0
@@ -130,6 +129,7 @@ class Trainer:
 
             reward_batch /= num_batch
             batch = memory.sample()
+
             #fixme value net
             if self.args.gpu:
                 gpu_policy.load_state_dict(runner.policy_net.state_dict())
@@ -138,26 +138,27 @@ class Trainer:
                 runner.policy_net.load_state_dict(gpu_policy.state_dict())
                 runner.value_net.load_state_dict(gpu_value.state_dict())
             else:
-                update_params(batch, batchifier, runner.policy_net, 
+                update_params(batch, batchifier, runner.policy_net,
                               runner.value_net, self.optimizer, args)
             runner.reset()
 
+            epoch_time = time.time() - epoch_begin_time
             if self.i_iter % args.log_interval == 0:
                 np.set_printoptions(precision=4)
-                print('Iteration {}\tSteps {}\tAverage reward {:10.4f}'.format(
-                    self.i_iter, self.num_total_steps, reward_batch
+                print('Iteration {}\tSteps {}\tAverage reward {:10.4f}\tTime taken {:.2f}s'.format(
+                    self.i_iter, self.num_total_steps, reward_batch, epoch_time
                 ))
                 log['#batch'].data.append(self.i_iter)
                 log['reward'].data.append(reward_batch)
                 if args.plot:
-                    
+
                     for k, v in log.items():
                         if v.plot:
                             self.vis.line(np.asarray(v.data), np.asarray(log[v.x_axis].data),
                             win=k, opts=dict(xlabel=v.x_axis, ylabel=k))
-            
+
             self.i_iter += 1
-        
+
 def update_params(batch, batchifier, policy_net, value_net, optimizer, args):
     # print("Updating params..")
     rewards = torch.Tensor(batch.reward)
@@ -172,11 +173,15 @@ def update_params(batch, batchifier, policy_net, value_net, optimizer, args):
         else:
             states = torch.stack(batch.state, 0)
     else:
-        states = batchifier(batch)
+        states = batchifier(batch.state)
     if args.gpu:
         states = states.cuda()
         actions = actions.cuda()
-    states = Variable(states, requires_grad=False)
+    if type(states) == list:
+        for i,j in enumerate(states):
+            states[i] = Variable(j, requires_grad = False)
+    else:
+        states = Variable(states, requires_grad = False)
     values = value_net(states)
 
     returns = torch.Tensor(actions.size(0),1)
@@ -202,7 +207,7 @@ def update_params(batch, batchifier, policy_net, value_net, optimizer, args):
 
     if args.normalize_rewards:
         advantages = (advantages - advantages.mean()) / advantages.std()
-    
+
     optimizer.zero_grad()
     log_p_a = policy_net(states)
     log_prob = multinomials_log_density(Variable(actions, requires_grad=False), log_p_a)
@@ -211,9 +216,9 @@ def update_params(batch, batchifier, policy_net, value_net, optimizer, args):
 
     values_ = value_net(states).squeeze()
     value_loss = (values_ - targets).pow(2).mean()
-    
+
     loss = action_loss + 0.05 * value_loss
-    
+
     # entropy regularization
     if args.entr > 0:
         entropy = 0
@@ -223,4 +228,3 @@ def update_params(batch, batchifier, policy_net, value_net, optimizer, args):
 
     loss.backward()
     optimizer.step()
-

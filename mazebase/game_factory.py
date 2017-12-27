@@ -12,26 +12,39 @@ import random
 # todo curriculum
 # todo save and load vocab and action lists
 
+#todo make this more general?  a game_stats field?
 def add_absolute_loc_vocab(vocab, game_opts):
-    for s in range(game_opts['range']['map_width'][3]):
-        for t in range(game_opts['range']['map_height'][3]):
+    if game_opts.get('range') is not None:
+        if game_opts.get['range'].get('map_width') is not None:
+            W = game_opts['range']['map_width'][3]
+            H = game_opts['range']['map_height'][3]
+    else:
+        W = game_opts['static']['map_width']
+        H = game_opts['static']['map_height']
+    for s in range(W):
+        for t in range(H):
             vocab.append('ax' + str(s) + 'y' + str(t))
 
-# default range option is specified as 
+
+# default range option is specified as
 # [current_min, current_max, min_max, max_max, increment]
 # min_max, max_max, and increment are only used in curriculum
 
 def generate_opts(gopts):
     opts = {}
-    for s in gopts['static']:
-        opts[s] = gopts['static'][s]
-    for s in gopts['range']:
-        minval = gopts['range'][s][0]
-        maxval = gopts['range'][s][1]
-        if type(minval) == int:
-            opts[s] = random.randint(minval, maxval)
-        else:
-            opts[s] = random.uniform(minval, maxval)
+    static_opts = gopts.get('static')
+    if static_opts is not None:
+        for s in static_opts:
+            opts[s] = static_opts[s]
+    range_opts = gopts.get('range')
+    if range_opts is not None:
+        for s in range_opts:
+            minval = range_opts[s][0]
+            maxval = range_opts[s][1]
+            if type(minval) == int:
+                opts[s] = random.randint(minval, maxval)
+            else:
+                opts[s] = random.uniform(minval, maxval)
     return opts
 
 
@@ -48,7 +61,7 @@ class GameFactory(object):
             }
             g['counters'] = {}
             g['required_opts'] = ['map_width','map_height']
-            self.games = {game_name: g}        
+            self.games = {game_name: g}
             self.reset_counters(game_name)
             self.ivocab = self.all_vocab(game_opts)
             self.iactions = self.all_actions(game_opts)
@@ -80,12 +93,12 @@ class GameFactory(object):
     def all_actions(self, game_opts):
         raise NotImplementedError
 
-    # default curriculum methods assumes a range option is 
+    # default curriculum methods assumes a range option is
     # specified as [current_min, current_max, min_max, max_max, increment]
     # that is: to make a game harder, you increase the max of the possible
     # values for that option (but still allow the possibility that smaller
     # values might be generated)
-    # to build a custom curriculum, you should override harder_random(), 
+    # to build a custom curriculum, you should override harder_random(),
     # easier_random(), check_hardness(), hardest(), easiest(), and probably the function
     # generate_opts() above
 
@@ -132,10 +145,10 @@ class GameFactory(object):
                 easiest = False
         if easiest:
             return -1
-        elif hardest: 
+        elif hardest:
             return 1
         else:
-            return 0        
+            return 0
 
     def freeze_curriculum(self, gname):
         self.games[gname]['game_opts']['curriculum_frozen'] = True
@@ -147,7 +160,7 @@ class GameFactory(object):
         results = self.games[gname]['counters']
         results['total_count'] += 1
         results['success_count'] += r
-        
+
     #error if no results?
     def success_pct(self, gname):
         results = self.games[gname]['counters']
@@ -169,10 +182,10 @@ class GameFactory(object):
                         if opt_name == o:
                             has_opt = True
                 if not has_opt:
-                    print('warning, game "' + g + '" has option "' + o + '" registered as required but that option is not in its game_opts') 
+                    print('warning, game "' + g + '" has option "' + o + '" registered as required but that option is not in its game_opts')
             #todo check the other way around for extraneous opts in game_opts
             #todo eventually do this right?
-        
+
 
     def __add__(self, other):
         if other.empty:

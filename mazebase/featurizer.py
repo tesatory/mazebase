@@ -25,7 +25,7 @@ class SentenceFeaturizer(object):
                 for t in range(-vrange+1,vrange):
                     w = 'rx' + str(s) + 'y' + str(t)
                     self.dictionary['ivocab'].append(w)
-                    self.dictionary['vocab'][w] = len(self.dictionary['ivocab'])
+                    self.dictionary['vocab'][w] = len(self.dictionary['ivocab']) - 1
 
     def to_sentence_item(self, item, agent_loc = None):
         s = []
@@ -71,6 +71,9 @@ class SentenceFeaturizer(object):
             if w is not None:
                 s.append(w)
         return s
+
+    def featurize(self, game):
+        return self.to_sentence(game, agent = game.agent)
 
 
 if __name__ == '__main__':
@@ -129,8 +132,7 @@ if __name__ == '__main__':
     F += switches.Factory('switches', game_opts['switches'],
                           switches.Game)
 
-
-    featurizer_opts = {'egocentric_coordinates':True,'visible_range':5}
+    featurizer_opts = {'egocentric_coordinates': True, 'visible_range': 5}
     SF = SentenceFeaturizer(featurizer_opts, F.dictionary)
     g = F.init_random_game()
     print(SF.to_sentence(g, g.agent))

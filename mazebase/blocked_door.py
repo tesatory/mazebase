@@ -9,7 +9,7 @@ import mazebase.grid_game as gg
 import mazebase.grid_item as gi
 import mazebase.standard_grid_actions as standard_grid_actions
 import mazebase.game_factory as gf
-
+import mazebase.distance_utils as dut
 
 class Game(gg.GridGame2D):
     def __init__(self, opts):
@@ -25,7 +25,7 @@ class Game(gg.GridGame2D):
         b = random.choice(self.items_bytype['block'])
         loc = b.attr['loc']
         self.remove_item(b)
-        s = gi.pushable_block({'loc': loc})
+        s = gi.PushableBlock({'loc': loc})
         self.add_prebuilt_item(s)
         gi.add_random_cycle_switches(self, self.nswitches, self.ncolors)
         # always goal0.  fixme?
@@ -52,6 +52,86 @@ class Game(gg.GridGame2D):
         r = self.opts['step_cost']
         r += self.agent.touch_cost()
         return r
+    
+    def get_supervision(self, featurizer):
+        gloc = self.items_bytype['goal'][0].attr['loc']
+        aloc = self.agent.attr['loc']
+        p, cost = dut.dijkstra_touch_cost(self, aloc, gloc)
+        states = []
+        actions = []
+        if cost < dut.get_big_cost():# goal is on this side...
+            path = dut.collect_path(p, gloc)
+            actions = dut.path_to_actions(path)
+            for a in actions:
+                states.append(featurizer.featurize(self))
+                self.act(a)
+                self.update()
+        else: # gonna have to move the block.
+            #find where to push:
+            bloc = self.items_bytype['pushable_block'][0].attr['loc']
+            dw = round((aloc[0]-bloc[0])/(abs(aloc[0]-bloc[0]) + .01))
+            dh = round((aloc[1]-bloc[1])/(abs(aloc[1]-bloc[1]) + .01))
+            bw = bloc[0]
+            bh = bloc[1]
+            if self.is_loc_reachable((bw + dw, bh)):
+                push_loc = (bw + dw, bh)
+                hasspace = (self.is_loc_reachable((bw - dw, bh))
+                            and self.is_loc_reachable((bw - 2*dw, bh)))
+                if dw > 0:
+                    push_direction = 'left'
+                else:
+                    push_direction = 'right'
+            elif self.is_loc_reachable((bloc[0], bloc[1] + dh)):
+                push_loc = (bloc[0], bloc[1] + dh)
+                hasspace = (self.is_loc_reachable((bw, bh - dh))
+                            and self.is_loc_reachable((bw , bh - 2*dh)))
+                if dh > 0:
+                    push_direction = 'down'
+                else:
+                    push_direction = 'up'
+            else:#push loc is blocked, return with only 'stop'
+                return [[featurizer.featurize(self), 'stop']]
+            if not hasspace:
+                return [[featurizer.featurize(self), 'stop']]
+            p, bcost = dut.dijkstra_touch_cost(self, aloc, push_loc)
+            path = dut.collect_path(p, push_loc)
+            to_block = dut.path_to_actions(path)
+            actions.extend(to_block)
+            for a in to_block:
+                states.append(featurizer.featurize(self))
+                self.act(a)
+                self.update()
+
+            states.append(featurizer.featurize(self))
+            self.act('push_' + push_direction)
+            actions.append('push_' + push_direction)
+            self.update()
+            
+            states.append(featurizer.featurize(self))
+            self.act(push_direction)
+            actions.append(push_direction)
+            self.update()
+            
+            states.append(featurizer.featurize(self))
+            self.act('push_' + push_direction)
+            actions.append('push_' + push_direction)
+            self.update()
+            
+            aloc = self.agent.attr['loc']
+            p, cost = dut.dijkstra_touch_cost(self, aloc, gloc)
+            if cost >= dut.get_big_cost():
+                # goal still unreachable (e.g. blocks next to door or pushed block onto goal)
+                # todo FIXME
+                return [[states[0], 'stop']]                
+            path = dut.collect_path(p, gloc)
+            togoal = dut.path_to_actions(path)
+            actions.extend(togoal)
+            for a in togoal:
+                states.append(featurizer.featurize(self))
+                self.act(a)
+                self.update()
+                
+        return list(zip(states, actions))
 
 
 class Factory(gf.GameFactory):
@@ -72,6 +152,7 @@ class Factory(gf.GameFactory):
         vocab.append('water')
         vocab.append('agent')
         vocab.append('agent0')
+        vocab.append('goal')
         vocab.append('goal0')
         for s in range(game_opts['range']['ncolors'][3]):
             vocab.append('color' + str(s))

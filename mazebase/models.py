@@ -4,6 +4,13 @@ from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.functional as F
 
+def build_nonlin(nonlin):
+    if nonlin == 'elu':
+        return  nn.ELU(inplace = True)
+    elif nonlin == 'celu':
+        return celu()
+    else:
+        return nn.ReLU(inplace = True)
 
 class Policy(nn.Module):
     def __init__(self, args, num_inputs):
@@ -55,6 +62,7 @@ class Commnet(nn.Module):
         self.affines = []
         self.nlayers = nlayers
         self.value_or_policy = value_or_policy
+        self.nonlin = build_nonlin(args.nonlin)
         for i in range(nlayers):
             self.affines.append(nn.Linear(2*64,64))
         if value_or_policy == 'policy':
@@ -80,7 +88,7 @@ class Commnet(nn.Module):
                 M = m[batch_idx] - emb
                 M /= (batch_len[batch_idx].unsqueeze(1).expand_as(M) - .99999)
                 emb = torch.cat([emb, M], 1)
-                emb = F.relu(self.affines[i](emb))
+                emb = self.nonlin(self.affines[i](emb))
 
         if self.value_or_policy == 'policy':
             return [F.log_softmax(head(emb)) for head in self.heads]

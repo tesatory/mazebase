@@ -63,9 +63,10 @@ def push_up(agent):
     h = agent.attr['loc'][1]
     to_be_pushed_loc = (w, h + 1)
     target_loc = (w, h + 2)
-    items = agent.game.items_byloc[to_be_pushed_loc]
-    for i in items:
-        push_item(agent.game, i, target_loc)
+    items = agent.game.items_byloc.get(to_be_pushed_loc)
+    if items is not None:
+        for i in items:
+            push_item(agent.game, i, target_loc)
 
 
 def push_down(agent):
@@ -73,9 +74,10 @@ def push_down(agent):
     h = agent.attr['loc'][1]
     to_be_pushed_loc = (w, h - 1)
     target_loc = (w, h - 2)
-    items = agent.game.items_byloc[to_be_pushed_loc]
-    for i in items:
-        push_item(agent.game, i, target_loc)
+    items = agent.game.items_byloc.get(to_be_pushed_loc)
+    if items is not None:
+        for i in items:
+            push_item(agent.game, i, target_loc)
 
 
 def push_left(agent):
@@ -83,9 +85,10 @@ def push_left(agent):
     h = agent.attr['loc'][1]
     to_be_pushed_loc = (w - 1, h)
     target_loc = (w - 2, h)
-    items = agent.game.items_byloc[to_be_pushed_loc]
-    for i in items:
-        push_item(agent.game, i, target_loc)
+    items = agent.game.items_byloc.get(to_be_pushed_loc)
+    if items is not None:
+        for i in items:
+            push_item(agent.game, i, target_loc)
 
 
 def push_right(agent):
@@ -93,6 +96,7 @@ def push_right(agent):
     h = agent.attr['loc'][1]
     to_be_pushed_loc = (w + 1, h)
     target_loc = (w + 2, h)
-    items = agent.game.items_byloc[to_be_pushed_loc]
-    for i in items:
-        push_item(agent.game, i, target_loc)
+    items = agent.game.items_byloc.get(to_be_pushed_loc)
+    if items is not None:
+        for i in items:
+            push_item(agent.game, i, target_loc)

@@ -38,7 +38,9 @@ class Game(gg.GridGame2D):
 
     def get_supervision(self, featurizer):
         gloc = self.goal_loc
-        p, _ = dut.dijkstra_touch_cost(self, self.agent.attr['loc'], gloc)
+        p, cost = dut.dijkstra_touch_cost(self, self.agent.attr['loc'], gloc)
+        if cost >= dut.get_big_cost():
+            return [[featurizer.featurize(self), 'stop']]
         path = dut.collect_path(p, gloc)
         actions = dut.path_to_actions(path)
         states = []

@@ -185,7 +185,7 @@ class PushableBlock(GridItem):
         self.attr['_reachable'] = False
 
     def _get_display_symbol(self):
-        return (u'   ', None, 'on_green', None)
+        return (u'   ', None, 'on_yellow', None)
 
 
 # ###############################################################################

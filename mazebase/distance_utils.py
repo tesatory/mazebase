@@ -3,7 +3,10 @@ import time
 import os
 #TODO remove torch and use a normal python data object for minning
 
+__BIG_COST = 100000
 
+def get_big_cost():
+    return __BIG_COST
 
 def get_neighbors(game, loc):
     n = []
@@ -24,7 +27,7 @@ def score_loc(game, loc):
         return c
     for i in items:
         if not game.is_loc_reachable(loc):
-            c = c - 10000
+            c = c - __BIG_COST
         if i.attr.get('_touch_cost'):
             c += i.attr.get('_touch_cost')
     return c
@@ -35,6 +38,8 @@ def score_loc(game, loc):
 
 
 def path_to_actions(path):
+    if len(path) == 0:
+        return []
     p = path[0]
     actions = []
     for i in range(len(path)-1):
@@ -54,6 +59,8 @@ def path_to_actions(path):
 
 
 def collect_path(parents, target_loc):
+    if parents is None:
+        return []
     loc = target_loc
     path = [loc]
     while parents[loc] is not None:
@@ -76,8 +83,10 @@ def search_and_move(game, target_loc, display = False):
     return p, path, actions
 
 def dijkstra_touch_cost(game, source_loc, target_loc):
+    if not game.is_loc_reachable(target_loc):
+        return None, __BIG_COST
     W = game.mapsize[0]
-    big = 100000
+    big = 100*__BIG_COST
     costs = {}
     dists = torch.ones(game.mapsize[1]*game.mapsize[1])*big
     dists[source_loc[0] + source_loc[1]*W] = 0
@@ -85,7 +94,12 @@ def dijkstra_touch_cost(game, source_loc, target_loc):
     parents[source_loc] = None
     loc = source_loc
     known = {loc: True}
+    tcount = 0
     while loc != target_loc:
+        tcount += 1
+        if tcount > 2000:
+            import pdb
+            pdb.set_trace()
         nhb = get_neighbors(game, loc)
         for n in nhb:
             if costs.get(n) is None:

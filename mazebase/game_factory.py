@@ -29,6 +29,7 @@ def add_absolute_loc_vocab(vocab, game_opts):
 # default range option is specified as
 # [current_min, current_max, min_max, max_max, increment]
 # min_max, max_max, and increment are only used in curriculum
+# TODO gopts object, with a .generate() method, and .max() and .min() type methods
 
 def generate_opts(gopts):
     opts = {}
@@ -104,7 +105,7 @@ class GameFactory(object):
 
     def harder_random(self, gname):
         gopts = self.games[gname]['game_opts']
-        if gopts.get('curriculm_frozen'):
+        if gopts.get('curriculum_frozen'):
             return
         range_opts = gopts['range']
         opt = random.choice(list(range_opts))
@@ -113,7 +114,7 @@ class GameFactory(object):
 
     def easier_random(self, gname):
         gopts = self.games[gname]['game_opts']
-        if gopts.get('curriculm_frozen'):
+        if gopts.get('curriculum_frozen'):
             return
         range_opts = gopts['range']
         opt = random.choice(list(range_opts))
@@ -122,14 +123,14 @@ class GameFactory(object):
 
     def hardest(self, gname):
         gopts = self.games[gname]['game_opts']
-        if gopts.get('curriculm_frozen'):
+        if gopts.get('curriculum_frozen'):
             return
         for opt in gopts['range']:
             gopts['range'][opt][1] = gopts['range'][opt][3]
 
     def easiest(self, gname):
         gopts = self.games[gname]['game_opts']
-        if gopts.get('curriculm_frozen'):
+        if gopts.get('curriculum_frozen'):
             return
         for opt in gopts['range']:
             gopts['range'][opt][1] = gopts['range'][opt][2]

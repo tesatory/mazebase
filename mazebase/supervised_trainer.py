@@ -98,6 +98,7 @@ def run_episode(game, policy_net, featurizer, iactions):
 if __name__ == '__main__':
     import mazebase.goto as goto
     import mazebase.blocked_door as blocked_door
+    import mazebase.multi_goals as multi_goals
     import mazebase.torch_featurizers as tfs
     import mazebase.models as models
 
@@ -113,6 +114,7 @@ if __name__ == '__main__':
     parser.add_argument('--num_data', default=100000, type=int, help='number of episodes')
     parser.add_argument('--num_iterations', default=1000000, type=int, help='number of batches to train on')
     parser.add_argument('--verbose', default=500, type=int, help='how often to print loss')
+    parser.add_argument('--edim', default=64, type=int, help='size of embedding dim for model')
 
     args = parser.parse_args()
     args.naction_heads = [9]
@@ -129,9 +131,22 @@ if __name__ == '__main__':
                                              'step_cost': -.1, 'nwater': 3,
                                              'water_cost': -.2, 'nblocks': 3},
                                   'range': {'ncolors': [3,3,3,3,0],
-                                            'nswitches': [1,1,1,1,0]}, 
+                                            'nswitches': [1,1,1,1,0]},
+                                  
                                  'featurizer': {}},
                                  blocked_door.Game)
+
+    F = F + multi_goals.Factory('multi_goals',
+                                 {'static': {'map_width': 10, 'map_height': 10,
+                                             'step_cost': -.1, 'nwater': 3,
+                                             'water_cost': -.2, 'nblocks': 3,
+                                             'flag_visited': 1},
+                                  'range': {'ncolors': [3,3,3,3,0],
+                                            'nswitches': [1,1,1,1,0],
+                                            'ngoals': [5,5,5,5,0],
+                                            'ngoals_active': [3,3,3,3,0]}, 
+                                 'featurizer': {}},
+                                 multi_goals.Game)
 
     
     feat = tfs.SparseSentenceFeaturizer({'egocentric_coordinates':True,

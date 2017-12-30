@@ -58,17 +58,18 @@ class Value(nn.Module):
 class Commnet(nn.Module):
     def __init__(self, args, nwords, nlayers, value_or_policy = 'policy'):
         super(Commnet, self).__init__()
-        self.embedding = nn.EmbeddingBag(nwords, 64)
+        self.edim = args.edim
+        self.embedding = nn.EmbeddingBag(nwords, self.edim)
         self.affines = []
         self.nlayers = nlayers
         self.value_or_policy = value_or_policy
         self.nonlin = build_nonlin(args.nonlin)
         for i in range(nlayers):
-            self.affines.append(nn.Linear(2*64,64))
+            self.affines.append(nn.Linear(2*self.edim,self.edim))
         if value_or_policy == 'policy':
-            self.heads = nn.ModuleList([nn.Linear(64, o) for o in args.naction_heads])
+            self.heads = nn.ModuleList([nn.Linear(self.edim, o) for o in args.naction_heads])
         else:
-            self.heads = nn.Linear(64, 1)
+            self.heads = nn.Linear(self.edim, 1)
     def forward(self, inp):
         x = inp[0]
         item_starts = inp[1]
@@ -80,7 +81,7 @@ class Commnet(nn.Module):
             batch_idx = inp[2]
             batch_len = inp[3].double()
         for i in range(self.nlayers):
-            m = Variable(torch.zeros(batch_len.size(0), 64))
+            m = Variable(torch.zeros(batch_len.size(0), self.edim))
             m.index_add_(0, batch_idx, emb)
             if i == self.nlayers - 1:
                 emb = m

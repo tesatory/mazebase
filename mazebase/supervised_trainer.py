@@ -159,7 +159,8 @@ if __name__ == '__main__':
     D.build(args.num_data)
     nwords = len(feat.dictionary['ivocab'])
     print('building model')
-    policy_net = models.Commnet(args, nwords, 3, value_or_policy = 'policy')
+    policy_net = models.Memnet(args, nwords, 3, value_or_policy = 'policy')
+#    policy_net = models.Commnet(args, nwords, 3, value_or_policy = 'policy')
     if args.optimizer == 'sgd':
         optimizer = optim.SGD(torch.nn.ModuleList([policy_net]).parameters(),lr = args.lrate)
     elif args.optimizer == 'adagrad':

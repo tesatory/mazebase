@@ -7,8 +7,10 @@ import torch.nn.functional as F
 def build_nonlin(nonlin):
     if nonlin == 'elu':
         return  nn.ELU(inplace = True)
-    elif nonlin == 'celu':
-        return celu()
+    elif nonlin == 'tanh':
+        return nn.Tanh()
+#    elif nonlin == 'celu':
+#        return celu()
     else:
         return nn.ReLU(inplace = True)
 
@@ -53,8 +55,10 @@ class Value(nn.Module):
         state_values = self.value_head(x)
         return state_values
 
-
-
+###############################################################################
+#commnet
+###############################################################################
+#todo: skip connections
 class Commnet(nn.Module):
     def __init__(self, args, nwords, nlayers, value_or_policy = 'policy'):
         super(Commnet, self).__init__()
@@ -88,10 +92,93 @@ class Commnet(nn.Module):
             else:
                 M = m[batch_idx] - emb
                 M /= (batch_len[batch_idx].unsqueeze(1).expand_as(M) - .99999)
-                emb = torch.cat([emb, M], 1)
-                emb = self.nonlin(self.affines[i](emb))
+                cemb = torch.cat([emb, M], 1)
+                emb = self.nonlin(self.affines[i](cemb))
 
         if self.value_or_policy == 'policy':
             return [F.log_softmax(head(emb)) for head in self.heads]
         else:
             return self.heads(emb)
+
+###############################################################################
+#memnet
+###############################################################################
+
+def batched_attention(q, input_embedding, output_embedding, batch_idx, batch_len):
+    # N is total number of items, grouped in B batches
+    # q is Bxd
+    # input_embedding and output_embedding is Nxd
+    # batch_id idx is N, indexes into q
+    B = q.size(0)
+    d = q.size(1)
+    N = input_embedding.size(0)
+    Q = q[batch_idx]
+    p = (Q*input_embedding).sum(1)
+    #FIXME .  do softmax not stupid.
+    #this part for a little stability:
+    u = p.data.new().resize_(B).zero_()
+    pp = p.data.clone()
+    pp[pp<0] = 0
+    u.index_add_(0, batch_idx.data, pp)
+    u /= batch_len.data
+    p -= Variable(u[batch_idx.data])
+    # and now back to bad softmax computation:
+    p = torch.exp(p)
+    partition = Variable(p.data.new().resize_(B).zero_())
+    partition.index_add_(0, batch_idx, p)
+    p /= partition[batch_idx]
+    weighted_oe = output_embedding*p.unsqueeze(1).expand_as(output_embedding)
+    output = Variable(q.data.new().resize_(q.size()).zero_())
+    output.index_add(0, batch_idx, weighted_oe)
+    return output
+
+class Memnet(nn.Module):
+    def __init__(self, args, nwords, nhops, value_or_policy = 'policy'):
+        super(Memnet, self).__init__()
+        self.edim = args.edim
+        self.embeddingQ = nn.EmbeddingBag(nwords, self.edim)
+        Q = self.embeddingQ.weight.data
+        Q.div_(Q.norm(2,1).unsqueeze(1).expand_as(Q))
+        self.embeddingA = nn.EmbeddingBag(nwords, self.edim)
+        A = self.embeddingA.weight.data
+        A.div_(A.norm(2,1).unsqueeze(1).expand_as(A))
+        self.embeddingC = nn.EmbeddingBag(nwords, self.edim)
+        C = self.embeddingC.weight.data
+        C.div_(C.norm(2,1).unsqueeze(1).expand_as(C))
+        self.affine = nn.Linear(self.edim,self.edim)
+        self.nhops = nhops
+        self.value_or_policy = value_or_policy
+        self.nonlin = build_nonlin(args.nonlin)
+
+        if value_or_policy == 'policy':
+            self.heads = nn.ModuleList([nn.Linear(self.edim, o) for o in args.naction_heads])
+        else:
+            self.heads = nn.Linear(self.edim, 1)
+    def forward(self, inp):
+        x = inp[0]
+        item_starts = inp[1]
+#        embQ = self.embeddingQ(x, item_starts)
+        embA = self.embeddingA(x, item_starts)
+        embC = self.embeddingC(x, item_starts)
+        if len(inp) == 2: #nonbatched
+            batch_idx = Variable(torch.LongTensor(item_starts.size(0)).zero_())
+            batch_len = Variable(torch.Tensor([item_starts.size(0)]))
+        else:
+            batch_idx = inp[2]
+            batch_len = inp[3].double()
+        B = batch_len.size(0)
+        u = Variable(embC.data.new().resize_(B, self.edim).zero_())
+#        u = Variable(embQ.data.new().resize_(B, self.edim).zero_())
+#        u.index_add_(0, batch_idx, embQ)
+        u.index_add_(0, batch_idx, embC)
+
+        for i in range(self.nhops):
+            o = batched_attention(u, embA, embC, batch_idx, batch_len)
+            u = self.nonlin(u + o)
+#            u = self.nonlin(self.affine(u) + o)
+
+
+        if self.value_or_policy == 'policy':
+            return [F.log_softmax(head(u)) for head in self.heads]
+        else:
+            return self.heads(u)

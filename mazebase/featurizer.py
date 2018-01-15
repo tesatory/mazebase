@@ -28,6 +28,8 @@ class SentenceFeaturizer(object):
                     self.dictionary['vocab'][w] = len(self.dictionary['ivocab']) - 1
 
     def to_sentence_item(self, item, agent_loc = None):
+        if item.attr.get('_invisible'):
+            return None
         s = []
         item_loc = item.attr.get('loc')
         if item_loc is None:

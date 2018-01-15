@@ -15,7 +15,7 @@ import random
 #todo make this more general?  a game_stats field?
 def add_absolute_loc_vocab(vocab, game_opts):
     if game_opts.get('range') is not None:
-        if game_opts.get['range'].get('map_width') is not None:
+        if game_opts['range'].get('map_width') is not None:
             W = game_opts['range']['map_width'][3]
             H = game_opts['range']['map_height'][3]
     else:

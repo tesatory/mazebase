@@ -63,13 +63,14 @@ class Game(gg.GridGame2D):
         return list(zip(states, actions))
 
 class Factory(gf.GameFactory):
-    def __init__(self, game_name, game_opts, Game):
-        super(Factory, self).__init__(game_name, game_opts, Game)
+    def __init__(self, game_name, opts, Game):
+        super(Factory, self).__init__(game_name, opts, Game)
         ro = ('map_width', 'map_height', 'step_cost', 'nblocks', 'nwater',
               'ngoals', 'water_cost')
         self.games[game_name]['required_opts'] = ro
 
-    def all_vocab(self, game_opts):
+    def all_vocab(self, opts):
+        game_opts = opts['game_opts']
         vocab = []
         vocab.append('info')
         vocab.append('corner')
@@ -82,11 +83,11 @@ class Factory(gf.GameFactory):
         vocab.append('agent')
         vocab.append('agent0')
         gf.add_absolute_loc_vocab(vocab, game_opts)
-        for s in range(game_opts['range']['ngoals'][3]):
+        for s in range(game_opts['ngoals'].max_possible()):
             vocab.append('goal' + str(s))
         return vocab
 
-    def all_actions(self, game_opts):
+    def all_actions(self, opts):
         actions = []
         actions.append('up')
         actions.append('down')
@@ -107,14 +108,3 @@ if __name__ == '__main__':
         'ngoals': 3
     }
     g = Game(opts)
-    #FIXME ngoals
-    F = Factory('goto',
-                {'static': {'step_cost': -.1, 'nwater': 5, 'water_cost': -.2},
-                 'featurizer': {},
-                 'range': {'ngoals': [5,5,5,5,0], 'map_width': [10,10,10,10,0],
-                           'map_height': [10,10,10,10,0]}},
-                Game)
-    feat = sf.SentenceFeaturizer({'egocentric_coordinates': True,
-                                  'visible_range': 5},
-                                 F.dictionary)
-    g.interactive_ascii()

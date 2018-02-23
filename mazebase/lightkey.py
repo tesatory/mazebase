@@ -54,13 +54,14 @@ class Game(gg.GridGame2D):
 
 
 class Factory(gf.GameFactory):
-    def __init__(self, game_name, game_opts, Game):
-        super(Factory, self).__init__(game_name, game_opts, Game)
+    def __init__(self, game_name, opts, Game):
+        super(Factory, self).__init__(game_name, opts, Game)
         ro = ('map_width', 'map_height', 'step_cost', 'water_cost', 'nblocks', 
               'nwater', 'nswitches', 'ncolors')
         self.games[game_name]['required_opts'] = ro
 
-    def all_vocab(self, game_opts):
+    def all_vocab(self, opts):
+        game_opts = opts['game_opts']
         vocab = []
         vocab.append('info')
         vocab.append('corner')
@@ -73,9 +74,10 @@ class Factory(gf.GameFactory):
         vocab.append('agent')
         vocab.append('agent0')
         vocab.append('goal0')
-        for s in range(game_opts['range']['ncolors'][3]):
+        for s in range(game_opts['ncolors'].max_possible()):
             vocab.append('color' + str(s))
-        if game_opts['featurizer'].get('abs_loc_vocab'):
+        feat_opts = opts.get('featurizer')
+        if (feat_opts is not None) and feat_opts.get('abs_loc_vocab'):
             gf.add_absolute_loc_vocab(vocab, game_opts)
         return vocab
 

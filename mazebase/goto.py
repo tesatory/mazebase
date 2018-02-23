@@ -51,13 +51,14 @@ class Game(gg.GridGame2D):
         return list(zip(states, actions))
 
 class Factory(gf.GameFactory):
-    def __init__(self, game_name, game_opts, Game):
-        super(Factory, self).__init__(game_name, game_opts, Game)
+    def __init__(self, game_name, opts, Game):
+        super(Factory, self).__init__(game_name, opts, Game)
         ro = ('map_width', 'map_height', 'step_cost', 'nblocks', 'nwater',
               'water_cost', 'fixed_goal')
         self.games[game_name]['required_opts'] = ro
 
-    def all_vocab(self, game_opts):
+    def all_vocab(self, opts):
+        game_opts = opts['game_opts']
         vocab = []
         vocab.append('info')
         vocab.append('corner')
@@ -68,15 +69,17 @@ class Factory(gf.GameFactory):
         vocab.append('water')
         vocab.append('agent')
         vocab.append('agent0')
-        if game_opts['featurizer'].get('abs_loc_vocab'):
+        feat_opts = opts.get('featurizer')
+        if (feat_opts is not None) and feat_opts.get('abs_loc_vocab'):
             gf.add_absolute_loc_vocab(vocab, game_opts)
-        if game_opts['static'].get('fixed_goal'):
-            vocab.append('ax0y0')
-        else:
+        if game_opts.get('fixed_goal'):
+            if game_opts['fixed_goal'].generate() == True:
+                vocab.append('ax0y0')
+        else: #need to add names for goal coordinates
             gf.add_absolute_loc_vocab(vocab, game_opts)
         return vocab
 
-    def all_actions(self, game_opts):
+    def all_actions(self, opts):
         actions = []
         actions.append('up')
         actions.append('down')
@@ -96,11 +99,15 @@ if __name__ == '__main__':
         'nwater': 3
     }
     g = Game(opts)
+    game_opts = gf.opts_from_dict({'map_width': 10,
+                            'map_height': 10, 'step_cost': -.1,
+                            'nblocks': 5, 'nwater': 5,
+                            'water_cost': -.2, 'fixed_goal': False})
     F = Factory('goto',
-                {'static': {'map_width': 10, 'map_height': 10, 'step_cost': -.1,
-                            'nblocks': 5, 'nwater': 5, 'water_cost': -.2,
-                            'fixed_goal': False}, 'featurizer': {}},
+                {'game_opts': game_opts,
+                 'featurizer': {}},
                 Game)
+    
     feat = sf.SentenceFeaturizer({'egocentric_coordinates': True,
                                   'visible_range': 5},
                                  F.dictionary)

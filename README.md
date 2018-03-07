@@ -10,6 +10,9 @@ $ pip install -e .
 
 ## Design
 
+Mazebase is designed for easily building randomized gridworlds, especially for experimenting with a single agent and multiple tasks/environments.
+
+
 Basic architecture:
 
 - the main game class is in grid_game.py

@@ -79,7 +79,7 @@ class Factory(gf.GameFactory):
             vocab.append('color' + str(s))
         return vocab
 
-    def all_actions(self, game_opts):
+    def all_actions(self, opts):
         actions = []
         actions.append('up')
         actions.append('down')

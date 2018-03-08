@@ -81,7 +81,7 @@ class Factory(gf.GameFactory):
             gf.add_absolute_loc_vocab(vocab, game_opts)
         return vocab
 
-    def all_actions(self, game_opts):
+    def all_actions(self, opts):
         actions = []
         actions.append('up')
         actions.append('down')

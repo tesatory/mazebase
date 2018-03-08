@@ -96,7 +96,7 @@ class Factory(gf.GameFactory):
               'nwater', 'nswitches', 'ngoals', 'ngoals_active', 'flag_visited')
         self.games[game_name]['required_opts'] = ro
 
-    def all_vocab(self, game_opts):
+    def all_vocab(self, opts):
         game_opts = opts['game_opts']
         vocab = []
         vocab.append('info')
@@ -120,7 +120,7 @@ class Factory(gf.GameFactory):
             gf.add_absolute_loc_vocab(vocab, game_opts)
         return vocab
 
-    def all_actions(self, game_opts):
+    def all_actions(self, opts):
         actions = []
         actions.append('up')
         actions.append('down')

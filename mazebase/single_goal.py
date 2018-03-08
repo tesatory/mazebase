@@ -50,7 +50,7 @@ class Factory(gf.GameFactory):
               'water_cost','fixed_goal')
         self.games[game_name]['required_opts'] = ro
 
-    def all_vocab(self, game_opts):
+    def all_vocab(self, opts):
         vocab = []
         vocab.append('corner')
         vocab.append('block')
@@ -61,7 +61,7 @@ class Factory(gf.GameFactory):
         vocab.append('goal0')
         return vocab
 
-    def all_actions(self, game_opts):
+    def all_actions(self, opts):
         actions = []
         actions.append('up')
         actions.append('down')

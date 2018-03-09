@@ -294,7 +294,8 @@ def add_random_water(game, nwater):
 
 
 def add_standard_items(game):
-    add_corners(game)
+    if not 'no_corner' in game.opts:
+        add_corners(game)
     add_random_blocks(game, game.nblocks)
     add_random_water(game, game.nwater)
     add_agent(game)

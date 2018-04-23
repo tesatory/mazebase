@@ -73,6 +73,7 @@ class Factory(gf.GameFactory):
         vocab.append('water')
         vocab.append('agent')
         vocab.append('agent0')
+        vocab.append('goal')
         vocab.append('goal0')
         for s in range(game_opts['ncolors'].max_possible()):
             vocab.append('color' + str(s))

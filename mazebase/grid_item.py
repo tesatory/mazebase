@@ -146,7 +146,7 @@ class CycleSwitch(GridItem):
         self.attr['@type'] = 'cycle_switch'
         self.attr['_reachable'] = True
 
-    def toggle(self):
+    def toggle(self, agent):
         self.color = (self.color + 1) % self.ncolors
         self.attr['@color'] = 'color' + str(self.color)
 
@@ -220,6 +220,64 @@ class CycleSwitchOpenedDoor(GridItem):
             return ('   ', None, None, None)
         else:
             return (' 0 ', _colors[self.color % 8], 'on_white', ['bold'])
+
+
+class PickableItem(GridItem):
+    def __init__(self, attr):
+        super(PickableItem, self).__init__(attr)
+        self.attr['_pickable'] = True
+        self.attr['_reachable'] = True
+
+    # override this
+    def toggle(self, agent):
+        agent.game.remove_item(self)
+
+    def _get_display_symbol(self):
+        return (u' p ', None, None, None)
+
+
+class PickableKey(PickableItem):
+    def __init__(self, attr, key):
+        super(PickableKey, self).__init__(attr)
+        self.attr['_type'] = 'pickable_key'
+        self.attr['@type'] = 'pickable_key'
+        self.key = key
+        self.attr['@key'] = 'key' + str(key)
+        
+    def toggle(self, agent):
+        # use different vocab to distinguish a picked key from a overlapping key
+        agent.attr['@picked_key'] = 'picked_key' + str(self.key)
+        agent.game.remove_item(self)
+
+    def _get_display_symbol(self):
+        return (u' k ', None, _on_colors[self.key % 8], None)
+        
+
+class PickableKeyOpenedDoor(GridItem):
+    def __init__(self, attr, key=0):
+        super(PickableKeyOpenedDoor, self).__init__(attr)
+        self.attr['_type'] = 'pickable_key_opened_door'
+        self.attr['@type'] = 'pickable_key_opened_door'
+        self.attr['@key'] = 'key' + str(key)
+        self.attr['_reachable'] = False
+        self.key = key
+        self.isopen = False
+
+    def update(self, game):
+        agent = game.items_bytype['agent'][0]        
+        if agent.attr.get('@picked_key') == 'picked_key' + str(self.key):
+            self.isopen = True
+            self.attr['_reachable'] = True
+        else:
+            self.isopen = False
+            self.attr['_reachable'] = False
+
+    def _get_display_symbol(self):
+        #        c = "\x1b[1;%dm" % (30 + self.color%8) + '0' + "\x1b[0m"
+        if self.isopen:
+            return ('   ', None, None, None)
+        else:
+            return (' k ', _colors[self.key % 8], 'on_white', ['bold'])
 
 
 def add_corners(game):

@@ -47,7 +47,7 @@ def toggle_close(agent):
     for i in items:
         toggle = getattr(i, "toggle", None)
         if callable(toggle):
-            i.toggle()
+            i.toggle(agent)
 
 
 def push_item(game, item, target_loc):

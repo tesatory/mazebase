@@ -233,7 +233,11 @@ class PickableItem(GridItem):
         agent.game.remove_item(self)
 
     def _get_display_symbol(self):
-        return (u' p ', None, None, None)
+        s = self.attr.get('_display_symbol')
+        if s is not None:
+            return s
+        else:
+            return (u' p ', None, None, None)
 
 
 class PickableKey(PickableItem):

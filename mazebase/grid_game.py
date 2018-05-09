@@ -194,6 +194,8 @@ class GridGame2D(object):
                         filter(lambda x: x.drawme, items),
                         key=lambda x: x.PRIO)
                     for item in itemlst:
+                        if item.attr.get('_invisible'):
+                            continue
                         config = item._get_display_symbol()
                         for i, v in list(enumerate(config))[1:]:
                             if v is not None:

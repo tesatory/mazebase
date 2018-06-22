@@ -370,3 +370,4 @@ if __name__ == '__main__':
     F += switches.Factory('switches', multigame_opts['switches'],
                           switches.Game)
     g = F.init_random_game()
+

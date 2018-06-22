@@ -5,7 +5,7 @@ from collections import namedtuple
 import time
 import visdom
 import numpy as np
-import action_utils
+import mazebase.action_utils as action_utils
 #from multi_threading import *
 
 import copy

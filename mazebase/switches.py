@@ -100,3 +100,4 @@ if __name__ == '__main__':
         'nwater': 3
     }
     g = Game(opts)
+    g.interactive_ascii()

@@ -111,6 +111,11 @@ class GridFeaturizer(SentenceFeaturizer):
         return self.to_tensor(game, game.agent)
 
 
+class ObjFeaturizer(SentenceFeaturizer):
+    def __init__(self, opts, dictionary=None):
+        opts['separate_loc'] = True
+        super(ObjFeaturizer, self).__init__(opts, dictionary = dictionary)
+
 
 
 if __name__ == '__main__':

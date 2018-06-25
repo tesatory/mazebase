@@ -116,6 +116,25 @@ class ObjFeaturizer(SentenceFeaturizer):
         opts['separate_loc'] = True
         super(ObjFeaturizer, self).__init__(opts, dictionary = dictionary)
 
+    def to_tensor(self, game, agent = None):
+        vocab = self.dictionary['vocab']
+        S = self.to_sentence(game, agent = agent)
+        
+        attr_item = torch.zeros(len(vocab) + 2)  # +2 for including loc attr
+        attr_item[0] = agent.attr['loc'][0]
+        attr_item[1] = agent.attr['loc'][1]
+        attrs = [attr_item]
+        for item, loc in S:
+            attr_item = torch.zeros(len(vocab) + 2)  # +2 for including loc attr
+            for w in item:
+                attr_item[vocab[w]] = 1
+                attrs.append(attr_item)
+        out = torch.stack(attrs)
+        print(out)
+        return out
+
+    def featurize(self, game):
+        return self.to_tensor(game, game.agent)
 
 
 if __name__ == '__main__':

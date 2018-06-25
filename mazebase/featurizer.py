@@ -9,6 +9,7 @@ class SentenceFeaturizer(object):
         self.opts = opts
         self.load_dictionary(dictionary)
         if self.opts.get('egocentric_coordinates'):
+            print('Egocentric')
             assert(opts.get('visible_range') is not None)
 
     def load_dictionary(self, dictionary):

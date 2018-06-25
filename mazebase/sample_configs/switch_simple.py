@@ -1,9 +1,11 @@
 import mazebase.game_factory as gf
 import mazebase.switches as switches
 from mazebase.torch_featurizers import GridFeaturizer
+from mazebase.torch_featurizers import ObjFeaturizer
 
 def game_opts():
-    featurizer_class = GridFeaturizer
+    #featurizer_class = GridFeaturizer
+    featurizer_class = ObjFeaturizer
     games = {}
     opts = {}
     opts['featurizer'] = {}

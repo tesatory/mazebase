@@ -50,7 +50,6 @@ class Game(gg.GridGame2D):
         r += self.agent.touch_cost()
         return r
 
-
 class Factory(gf.GameFactory):
     def __init__(self, game_name, opts, Game):
         super(Factory, self).__init__(game_name, opts, Game)
@@ -95,7 +94,7 @@ if __name__ == '__main__':
         'map_width': 10,
         'map_height': 10,
         'step_cost': -.1,
-        'water_cost': -.1,
+        'water_cost': -.2,
         'nblocks': 3,
         'nwater': 3
     }

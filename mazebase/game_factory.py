@@ -43,9 +43,9 @@ class GameOpt(object):
                 self.type = 'float'
             else:
                 self.type = 'int'
-                        
+
     def generate(self):
-        if self.static:            
+        if self.static:
             return self.optvals
         else:
             minval = self.optvals[0]
@@ -63,13 +63,13 @@ class GameOpt(object):
             if self.optvals[1] < self.optvals[3]:
                 self.optvals[1] += self.optvals[4]
                 self.optvals[1] = min(self.optvals[1], self.optvals[3])
-            
+
     def easier(self):
         if not self.static:
             if self.optvals[1] > self.optvals[2]:
                 self.optvals[1] -= self.optvals[4]
                 self.optvals[1] = max(self.optvals[1], self.optvals[2])
-                
+
     def hardest(self):
         if not self.static:
             self.optvals[1] = self.optvals[3]
@@ -104,7 +104,7 @@ class GameOpt(object):
             return False
         return True
 
-    # halts curriculum on this option 
+    # halts curriculum on this option
     def freeze(self):
         self.frozen = True
 
@@ -117,7 +117,7 @@ class GameOpt(object):
             return self.optvals
         else:
             return self.optvals[3]
-        
+
     def min_possible(self):
         if self.static:
             return self.optvals
@@ -125,7 +125,7 @@ class GameOpt(object):
             return self.optvals[0]
 
 # takes a dict of GameOpt objects indexed by their names
-# and outputs a dict of options to feed to a game generator 
+# and outputs a dict of options to feed to a game generator
 def generate_opts(gopts):
     opts = {}
     for o in gopts:
@@ -145,7 +145,7 @@ def opts_from_dict(dopts):
 
 
 # inputs into constructor:
-# game_name is a string identifying the game. 
+# game_name is a string identifying the game.
 # opts is a dictionary with the field:
 #     game_opts, a dictionary of GameOpt objects
 #     can use other fields if desired when subclassing
@@ -280,7 +280,7 @@ class GameFactory(object):
 
     def reset_counters(self, gname):
         self.games[gname]['counters'] = {'success_count':0,'total_count':0}
-        
+
     def max_possible_opt(self, optname):
         M = -100000000000
         for g in self.games:
@@ -294,7 +294,7 @@ class GameFactory(object):
                 else:
                     pass
         return M
-        
+
     def check_opts(self):
         for g in self.games:
             ro = self.games[g]['required_opts']

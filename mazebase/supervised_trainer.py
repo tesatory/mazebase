@@ -76,25 +76,28 @@ class FixedDataTrainer(object):
                 print('loss ' + str(avg_loss/self.verbose) + ' at iteration ' + str(it))
                 avg_loss = 0
 
-def run_episode(game, policy_net, featurizer, iactions):
+def run_episode(g, policy_net, featurizer, iactions):
     for i in range(30):
         os.system('clear')
+        print('Current step: ', i)
         g.display_ascii()
-        time.sleep(.3)
-        x = featurizer.featurize(game)
+        time.sleep(1.0)
+        x = featurizer.featurize(g)
         #todo recursive conversion to Variable
-        for i,j in enumerate(x):
-            x[i] = Variable(j)
+        #for i,j in enumerate(x):
+        #    x[i] = Variable(j)
+        x = Variable(x.view(-1))
         p = policy_net(x)
         a = torch.multinomial(torch.exp(p[0].data.squeeze()),1)
         a = iactions[a[0]]
+        print('Action: ', a)
         g.act(a)
         g.update()
         if g.finished:
             os.system('clear')
             g.display_ascii()
             break
-                
+
 if __name__ == '__main__':
     import mazebase.goto as goto
     import mazebase.blocked_door as blocked_door
@@ -119,7 +122,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     args.naction_heads = [9]
     print(args)
-        
+
     F = goto.Factory('goto',
                 {'static': {'map_width': 10, 'map_height': 10, 'step_cost': -.1,
                             'nblocks': 5, 'nwater': 5, 'water_cost': -.2,
@@ -132,7 +135,7 @@ if __name__ == '__main__':
                                              'water_cost': -.2, 'nblocks': 3},
                                   'range': {'ncolors': [3,3,3,3,0],
                                             'nswitches': [1,1,1,1,0]},
-                                  
+
                                  'featurizer': {}},
                                  blocked_door.Game)
 
@@ -144,11 +147,11 @@ if __name__ == '__main__':
                                   'range': {'ncolors': [3,3,3,3,0],
                                             'nswitches': [1,1,1,1,0],
                                             'ngoals': [5,5,5,5,0],
-                                            'ngoals_active': [3,3,3,3,0]}, 
+                                            'ngoals_active': [3,3,3,3,0]},
                                  'featurizer': {}},
                                  multi_goals.Game)
 
-    
+
     feat = tfs.SparseSentenceFeaturizer({'egocentric_coordinates':True,
                                    'separate_loc':False,
                                    'visible_range':8}, F.dictionary)

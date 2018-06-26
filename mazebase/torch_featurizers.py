@@ -118,19 +118,22 @@ class ObjFeaturizer(SentenceFeaturizer):
 
     def to_tensor(self, game, agent = None):
         vocab = self.dictionary['vocab']
+        #print('vocab: ', vocab)
         S = self.to_sentence(game, agent = agent)
         
-        attr_item = torch.zeros(len(vocab) + 2)  # +2 for including loc attr
-        attr_item[0] = agent.attr['loc'][0]
-        attr_item[1] = agent.attr['loc'][1]
-        attrs = [attr_item]
+        attrs = []
         for item, loc in S:
             attr_item = torch.zeros(len(vocab) + 2)  # +2 for including loc attr
+            #print(item)
+            attr_item[0] = loc[0]
+            attr_item[1] = loc[1]
             for w in item:
-                attr_item[vocab[w]] = 1
-                attrs.append(attr_item)
+                attr_item[vocab[w] + 2] = 1
+            attrs.append(attr_item)
         out = torch.stack(attrs)
-        print(out)
+        #print('num items: ', len(S))
+        #print('len vocab: ', len(vocab))
+        #print(out)
         return out
 
     def featurize(self, game):

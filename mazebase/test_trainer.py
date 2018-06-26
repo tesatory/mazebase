@@ -22,6 +22,7 @@ import mazebase.env_wrapper as env_wrapper
 #this needs to be renamed or moved
 import mazebase.models as models
 import mazebase.multi_threaded_trainer as tt
+import mazebase.supervised_trainer as st
 import mazebase.torch_featurizers as tfs
 
 
@@ -56,7 +57,7 @@ parser.add_argument('--lrate', type=float, default=1e-2, metavar='G',
 parser.add_argument('--entr', type=float, default=0, metavar='G',
                     help='entropy regularization')
 parser.add_argument('--nthreads', type=int, default=10,
-                    help='How many threads to run envs in')                    
+                    help='How many threads to run envs in')
 parser.add_argument('--config_path', default="config/test.py",
                     help='path to config file')
 parser.add_argument('--gpu', default=False, action="store_true", help='use GPU')
@@ -80,15 +81,19 @@ log['#batch'] = LogField(list(), False, '')
 log['reward'] = LogField(list(), True, '#batch')
 
 
-def env_maker():
+def env_maker_all():
     game_opts, games, feat_class = load_config(args.config_path)
     F = gf.GameFactory(None, None, None)
     for g in games:
         F += games[g].Factory(g, game_opts[g], games[g].Game)
     featurizer = feat_class(game_opts['featurizer'], F.dictionary)
-    return env_wrapper.MazeBaseWrapper(F, featurizer, args)
+    return env_wrapper.MazeBaseWrapper(F, featurizer, args), F, featurizer
 
-env = env_maker()
+def env_maker():
+    env, _, _ = env_maker_all()
+    return env
+
+env, factory, featurizer = env_maker_all()
 args.naction_heads = env.num_actions
 
 if args.model_type == 'fc':
@@ -108,12 +113,12 @@ if args.seed >= 0:
 policy_net.share_memory()
 value_net.share_memory()
 
-optimizer = optim.RMSprop(torch.nn.ModuleList([policy_net, value_net]).parameters(), 
+optimizer = optim.RMSprop(torch.nn.ModuleList([policy_net, value_net]).parameters(),
     lr = args.lrate, alpha=0.97, eps=1e-6)
 
-                
-if args.nthreads > 1:               
-    def build_eprunner(): 
+
+if args.nthreads > 1:
+    def build_eprunner():
         return trainer.EpisodeRunner(env_maker, policy_net, value_net, args)
 
     runner = tt.ThreadedEpisodeRunner(args, build_eprunner)
@@ -125,3 +130,7 @@ else:
 
 playground = trainer.Trainer(runner, optimizer, args, batchifier = batchifier)
 playground.run(args.num_iterations)
+
+# demo
+st.run_episode(factory.init_random_game(), policy_net, featurizer, factory.iactions)
+

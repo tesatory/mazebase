@@ -4,8 +4,8 @@ from mazebase.torch_featurizers import GridFeaturizer
 from mazebase.torch_featurizers import ObjFeaturizer
 
 def game_opts():
-    #featurizer_class = GridFeaturizer
-    featurizer_class = ObjFeaturizer
+    featurizer_class = GridFeaturizer
+    #featurizer_class = ObjFeaturizer
     games = {}
     opts = {}
     opts['featurizer'] = {}

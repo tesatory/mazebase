@@ -1,4 +1,4 @@
-import time 
+import time
 import numpy as np
 
 def to_numpy_flat_recursive(x):
@@ -9,7 +9,7 @@ def to_numpy_flat_recursive(x):
         return x.view(-1).numpy()
 
 class MazeBaseWrapper(object):
-    def __init__(self, factory, featurizer, args):
+    def __init__(self, factory, featurizer, args=None):
         self.factory = factory
         self.featurizer = featurizer
         self.env = self.factory.init_random_game()
@@ -19,20 +19,20 @@ class MazeBaseWrapper(object):
     def observation_dim(self):
         obs = self.get_obs()
         #fixme
-        if self.args.__NUMPY__:
+        if hasattr(self.args, '__NUMPY__') and self.args.__NUMPY__:
             return obs.size
         else:
             return obs.size(0)
-            
+
     @property
     def num_actions(self):
         return [len(self.factory.actions)]
-    
+
     def get_obs(self):
         #FIXME?  what about multi agent?
         obs = self.featurizer.to_tensor(self.env, self.env.agent)
-        if self.args.__NUMPY__:
-            if type(obs) == list: 
+        if hasattr(self.args, '__NUMPY__') and self.args.__NUMPY__:
+            if type(obs) == list:
                 to_numpy_flat_recursive(obs)
             else:
                 obs = obs.view(-1).numpy()
@@ -54,7 +54,7 @@ class MazeBaseWrapper(object):
         done = not self.env.is_active()
         r = self.env.get_reward()
         return (obs, r, done)
-    
+
     def display(self):
         self.env.display_ascii()
         time.sleep(0.5)

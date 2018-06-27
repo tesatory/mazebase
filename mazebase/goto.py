@@ -107,7 +107,7 @@ if __name__ == '__main__':
                 {'game_opts': game_opts,
                  'featurizer': {}},
                 Game)
-    
+
     feat = sf.SentenceFeaturizer({'egocentric_coordinates': True,
                                   'visible_range': 5},
                                  F.dictionary)

@@ -88,7 +88,7 @@ def dijkstra_touch_cost(game, source_loc, target_loc):
     W = game.mapsize[0]
     big = 100*__BIG_COST
     costs = {}
-    dists = torch.ones(game.mapsize[1]*game.mapsize[1])*big
+    dists = torch.ones(game.mapsize[0]*game.mapsize[1])*big
     dists[source_loc[0] + source_loc[1]*W] = 0
     parents = {}
     parents[source_loc] = None

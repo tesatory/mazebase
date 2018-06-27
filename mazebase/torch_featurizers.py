@@ -120,7 +120,7 @@ class ObjFeaturizer(SentenceFeaturizer):
         vocab = self.dictionary['vocab']
         #print('vocab: ', vocab)
         S = self.to_sentence(game, agent = agent)
-        
+
         attrs = []
         for item, loc in S:
             attr_item = torch.zeros(len(vocab) + 2)  # +2 for including loc attr
@@ -144,7 +144,7 @@ if __name__ == '__main__':
     import mazebase.goto as goto
     import mazebase.switches as switches
     import mazebase.game_factory as gf
-    
+
     games = {}
     opts = {}
     opts['featurizer'] = {}

@@ -22,6 +22,12 @@ class Policy(nn.Module):
         self.heads = nn.ModuleList([nn.Linear(64, o) for o in args.naction_heads])
 
     def forward(self, x):
+        '''
+        Args:
+            x: [batch_size x feature]
+        '''
+        batch_size = x.size()[0]
+        x = x.view(batch_size, -1)
         x = F.tanh(self.affine1(x))
         x = F.tanh(self.affine2(x))
         return [F.log_softmax(head(x)) for head in self.heads]

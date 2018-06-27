@@ -24,15 +24,7 @@ import mazebase.models as models
 import mazebase.multi_threaded_trainer as tt
 import mazebase.supervised_trainer as st
 import mazebase.torch_featurizers as tfs
-
-
-def load_config(config_path):
-    import importlib.util
-    spec = importlib.util.spec_from_file_location("module.name", config_path)
-    config  = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(config)
-    return config.game_opts()
-
+import mazebase.config_env as config_env
 
 #torch.utils.backcompat.broadcast_warning.enabled = True
 #torch.utils.backcompat.keepdim_warning.enabled = True
@@ -80,20 +72,7 @@ log = dict()
 log['#batch'] = LogField(list(), False, '')
 log['reward'] = LogField(list(), True, '#batch')
 
-
-def env_maker_all():
-    game_opts, games, feat_class = load_config(args.config_path)
-    F = gf.GameFactory(None, None, None)
-    for g in games:
-        F += games[g].Factory(g, game_opts[g], games[g].Game)
-    featurizer = feat_class(game_opts['featurizer'], F.dictionary)
-    return env_wrapper.MazeBaseWrapper(F, featurizer, args), F, featurizer
-
-def env_maker():
-    env, _, _ = env_maker_all()
-    return env
-
-env, factory, featurizer = env_maker_all()
+env, factory, featurizer = config_env.env_maker_all(args.config_path)
 args.naction_heads = env.num_actions
 
 if args.model_type == 'fc':

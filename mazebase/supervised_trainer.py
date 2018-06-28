@@ -2,7 +2,6 @@ import torch
 from torch import nn
 from torch.autograd import Variable
 from torch import optim
-from tqdm import tqdm
 import os
 import time
 import random
@@ -10,9 +9,11 @@ import random
 #import numpy as np
 
 import mazebase.config_env as config_env
+import mazebase.episode_loader as loader
 
 # collect rewards?
-# build as torch dataset?
+# deprecated
+# use episode_loader.DataBuilder instead (use pytorch Dataset and DataLoader)
 class DataBuilder(object):
     def __init__(self, factory, featurizer, batchifier, args):
         self.args = args
@@ -30,7 +31,7 @@ class DataBuilder(object):
             for s in S:
                 data.append(s)
         self.data = data
-        train_ratio = 0.8
+        train_ratio = 0.9
         val_start = int(len(self.data) * train_ratio)
         self.training_data = self.data[:val_start]
         self.val_data = self.data[val_start:]
@@ -57,8 +58,13 @@ class DataBuilder(object):
 
         return states, torch.LongTensor([self.factory.actions[a] for a in b[1]])
 
+
 class FixedDataTrainer(object):
     def __init__(self, data, policy_net, optimizer, args):
+        '''
+        Args:
+            data: episode_loader.DataBuilder object
+        '''
         self.i_iter = 0
         self.num_total_steps = 0
         self.data = data
@@ -67,27 +73,35 @@ class FixedDataTrainer(object):
         self.verbose = args.verbose
         self.policy_net = policy_net
 
+    def evaluate(self):
+        self.policy_net.eval()
+
     def train(self, num_iteration):
+        self.policy_net.train()
         lf = nn.NLLLoss()
         avg_loss = 0
-        for it in range(num_iteration):
-            self.optimizer.zero_grad()
-            x, y = self.data.sample()
-            #todo recursive conversion to Variable
-            #for i,j in enumerate(x):
-            #    x[i] = Variable(j)
-            x = Variable(x, requires_grad=False)
-            y = Variable(y, requires_grad=False)
-            out = self.policy_net(x)
-            if type(out) == list:
-                out = out[0]
-            loss = lf(out, y)
-            loss.backward()
-            self.optimizer.step()
-            avg_loss += loss.data[0]
-            if it % self.verbose == 0:
-                print('loss ' + str(avg_loss/self.verbose) + ' at iteration ' + str(it))
-                avg_loss = 0
+        it = 0
+        while it < args.num_iterations:
+            for batch_idx, batch_data in enumerate(self.data.train_dataset_loader):
+                self.optimizer.zero_grad()
+                #x, y = self.data.sample()
+                #todo recursive conversion to Variable
+                #for i,j in enumerate(x):
+                #    x[i] = Variable(j)
+                # state
+                x = Variable(batch_data['state'].float(), requires_grad=False)
+                y = Variable(batch_data['action'].float(), requires_grad=False)
+                out = self.policy_net(x)
+                if type(out) == list:
+                    out = out[0]
+                loss = lf(out, y)
+                loss.backward()
+                self.optimizer.step()
+                avg_loss += loss.data[0]
+                if it % self.verbose == 0:
+                    print('loss ' + str(avg_loss/self.verbose) + ' at iteration ' + str(it))
+                    avg_loss = 0
+                it += 1
 
 def run_episode(g, policy_net, featurizer, iactions):
     for i in range(30):
@@ -128,15 +142,26 @@ if __name__ == '__main__':
     parser.add_argument('--lrate', type=float, default=1e-2, metavar='G',
                         help='learning rate (default: 1e-2)')
     parser.add_argument('--num-data', dest='num_data', default=100000, type=int, help='number of episodes')
-    parser.add_argument('--iter', dest='num_iterations', default=1000000, type=int, help='number of batches to train on')
+    parser.add_argument('--iter', dest='num_iterations', default=100000, type=int, help='number of batches to train on')
     parser.add_argument('--verbose', default=500, type=int, help='how often to print loss')
     parser.add_argument('--edim', default=64, type=int, help='size of embedding dim for model')
     parser.add_argument('--model-type', dest='model_type', default='fc', type=str, help='fc or commnet')
     parser.add_argument('--config-path', dest='config_path', default="config/test.py",
                         help='path to config file')
+    parser.add_argument('--num-workers', dest='num_workers', type=int,
+                        help='Number of workers to load data.')
+    parser.add_argument('--plot', action='store_true', default=False,
+                        help='plot training progress')
+    parser.add_argument('--plot-env', dest='plot_env', type=str, help='plot env name')
+
+    parser.set_defaults(
+            num_workers=1,
+            plot_env='main'
+    )
 
     args = parser.parse_args()
     args.naction_heads = [9]
+
     print(args)
 
     #F = goto.Factory('goto',
@@ -180,8 +205,10 @@ if __name__ == '__main__':
     env_wrapper, factory, featurizer = config_env.env_maker_all(args.config_path)
     args.naction_heads = env_wrapper.num_actions
     #D, factory, featurizer = DataBuilder(F, feat, bfi, {})
-    D = DataBuilder(factory, featurizer, None, args)
-    D.build(args.num_data)
+    D = loader.DataBuilder(args.num_data, factory, featurizer, None, args)
+    print('Training size: ', len(D.train_dataset_loader))
+    print('Test size: ', len(D.test_dataset_loader))
+    #D.build(args.num_data)
 
     nwords = len(featurizer.dictionary['ivocab'])
     print('building model')

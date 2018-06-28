@@ -26,13 +26,13 @@ class DataBuilder:
         val_start = int(self.num_data * train_ratio)
         training_data = self.data[:val_start]
         self.train_dataset_loader = torch.utils.data.DataLoader(
-                    EpisodeSampler(training_data),
+                    EpisodeSampler(training_data, self.factory),
                     batch_size=self.args.batch_size,
                     shuffle=True,
                     num_workers=self.args.num_workers)
         test_data = self.data[val_start:]
         self.test_dataset_loader = torch.utils.data.DataLoader(
-                    EpisodeSampler(test_data),
+                    EpisodeSampler(test_data, self.factory),
                     batch_size=self.args.batch_size,
                     shuffle=False,
                     num_workers=self.args.num_workers)
@@ -43,13 +43,13 @@ class EpisodeSampler(torch.utils.data.Dataset):
     '''
     def __init__(self, data, factory):
         self.data = data
+        self.factory = factory
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, idx):
         state, action = self.data[idx]
-        print(action)
         return {'state': state,
-                'action': action }
+                'action': torch.LongTensor([self.factory.actions[action]]) }
 

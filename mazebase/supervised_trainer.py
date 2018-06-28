@@ -89,8 +89,9 @@ class FixedDataTrainer(object):
                 #for i,j in enumerate(x):
                 #    x[i] = Variable(j)
                 # state
-                x = Variable(batch_data['state'].float(), requires_grad=False)
-                y = Variable(batch_data['action'].float(), requires_grad=False)
+                x = Variable(batch_data['state'].double(), requires_grad=False)
+                # squeeze since the label should be 1D for torch.nn.NLLLoss
+                y = Variable(batch_data['action'].squeeze(), requires_grad=False)
                 out = self.policy_net(x)
                 if type(out) == list:
                     out = out[0]

@@ -1,12 +1,13 @@
+import numpy as np
+import os
+import random
+import sklearn.metrics as metrics
+import time
 import torch
 from torch import nn
 from torch.autograd import Variable
 from torch import optim
-import os
-import time
-import random
 #import visdom
-#import numpy as np
 
 import mazebase.config_env as config_env
 import mazebase.episode_loader as loader
@@ -72,13 +73,41 @@ class FixedDataTrainer(object):
         self.optimizer = optimizer
         self.verbose = args.verbose
         self.policy_net = policy_net
+        self.loss_fn = nn.NLLLoss()
+        self.eval_every = args.eval_every
 
-    def evaluate(self):
+    def evaluate(self, name='Test', max_num_examples=None):
+        if name == 'Test':
+            data = self.data.test_dataset_loader
+        else:
+            data = self.data.train_dataset_loader
         self.policy_net.eval()
+        labels = []
+        preds = []
+        for batch_idx, batch_data in enumerate(data):
+            x = Variable(batch_data['state'].double(), requires_grad=False)
+            labels.append(batch_data['action'].squeeze().long().numpy())
+            ypred = self.policy_net(x)
+            if type(ypred) == list:
+                ypred = ypred[0]
+            _, indices = torch.max(ypred, 1)
+            preds.append(indices.data.numpy())
+
+            if max_num_examples is not None:
+                if (batch_idx+1)*args.batch_size > max_num_examples:
+                    break
+
+        labels = np.hstack(labels)
+        preds = np.hstack(preds)
+
+        result = {'prec': metrics.precision_score(labels, preds, average='macro'),
+                  'recall': metrics.recall_score(labels, preds, average='macro'),
+                  'F1': metrics.f1_score(labels, preds, average="micro")}
+        print(result)
+        return result
 
     def train(self, num_iteration):
         self.policy_net.train()
-        lf = nn.NLLLoss()
         avg_loss = 0
         it = 0
         while it < args.num_iterations:
@@ -95,13 +124,15 @@ class FixedDataTrainer(object):
                 out = self.policy_net(x)
                 if type(out) == list:
                     out = out[0]
-                loss = lf(out, y)
+                loss = self.loss_fn(out, y)
                 loss.backward()
                 self.optimizer.step()
                 avg_loss += loss.data[0]
                 if it % self.verbose == 0:
                     print('loss ' + str(avg_loss/self.verbose) + ' at iteration ' + str(it))
                     avg_loss = 0
+                if it % self.eval_every == 0:
+                    self.evaluate()
                 it += 1
 
 def run_episode(g, policy_net, featurizer, iactions):
@@ -154,10 +185,12 @@ if __name__ == '__main__':
     parser.add_argument('--plot', action='store_true', default=False,
                         help='plot training progress')
     parser.add_argument('--plot-env', dest='plot_env', type=str, help='plot env name')
+    parser.add_argument('--eval-every', dest='eval_every', type=int, help='run evaluation after every X iterations')
 
     parser.set_defaults(
             num_workers=1,
-            plot_env='main'
+            plot_env='main',
+            eval_every=1000
     )
 
     args = parser.parse_args()

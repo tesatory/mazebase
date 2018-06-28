@@ -23,7 +23,7 @@ def game_opts():
     g_dict['map_height'] = [7, 7, 7, 7, 0]
     g_dict['nblocks'] = [2, 2, 2, 2, 0]
     g_dict['nwater'] = [1, 1, 1, 1, 0]
-    g_dict['nswitches'] = [2, 2, 2, 2, 0]
+    g_dict['nswitches'] = [1, 1, 1, 1, 0]
     g_dict['ncolors'] = [2, 2, 2, 2, 0]
 
     g_opts = {'game_opts': gf.opts_from_dict(g_dict),

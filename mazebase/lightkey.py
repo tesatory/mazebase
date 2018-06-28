@@ -5,10 +5,11 @@ from __future__ import print_function
 
 import random
 
+import mazebase.distance_utils as dut
+import mazebase.game_factory as gf
 import mazebase.grid_game as gg
 import mazebase.grid_item as gi
 import mazebase.standard_grid_actions as standard_grid_actions
-import mazebase.game_factory as gf
 
 
 class Game(gg.GridGame2D):
@@ -52,11 +53,50 @@ class Game(gg.GridGame2D):
         r += self.agent.touch_cost()
         return r
 
+    def get_supervision(self, featurizer):
+        gloc = self.items_bytype['goal'][0].attr['loc']
+        path = []
+        all_actions = []
+        all_states = []
+
+        door = self.items_bytype['cycle_switch_opened_door'][0]
+        p, cost = dut.dijkstra_touch_cost(self, self.agent.attr['loc'], gloc)
+        if cost >= dut.get_big_cost():
+            # switch
+            # note: order issue when multiple switches exist
+            for switch in self.items_bytype['cycle_switch']:
+                switch_loc = switch.attr['loc']
+                p_switch, cost_switch = dut.dijkstra_touch_cost(self, self.agent.attr['loc'], switch_loc)
+                if cost_switch >= dut.get_big_cost():
+                    return [[featurizer.featurize(self), 'stop']]
+                path = dut.collect_path(p_switch, switch_loc)
+                actions = dut.path_to_actions(path)
+                for a in actions:
+                    all_states.append(featurizer.featurize(self))
+                    self.act(a)
+                    self.update()
+                all_actions += actions
+                while switch.color != door.color:
+                    all_states.append(featurizer.featurize(self))
+                    all_actions.append('toggle_close')
+                    self.act('toggle_close')
+                    self.update()
+        # go to destination after toggling all switches to the same color as door
+        p, cost = dut.dijkstra_touch_cost(self, self.agent.attr['loc'], gloc)
+        path = dut.collect_path(p, gloc)
+        actions = dut.path_to_actions(path)
+        for a in actions:
+            all_states.append(featurizer.featurize(self))
+            self.act(a)
+            self.update()
+        all_actions += actions
+        return list(zip(all_states, all_actions))
+
 
 class Factory(gf.GameFactory):
     def __init__(self, game_name, opts, Game):
         super(Factory, self).__init__(game_name, opts, Game)
-        ro = ('map_width', 'map_height', 'step_cost', 'water_cost', 'nblocks', 
+        ro = ('map_width', 'map_height', 'step_cost', 'water_cost', 'nblocks',
               'nwater', 'nswitches', 'ncolors')
         self.games[game_name]['required_opts'] = ro
 

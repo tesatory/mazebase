@@ -247,7 +247,7 @@ class PickableKey(PickableItem):
         self.attr['@type'] = 'pickable_key'
         self.key = key
         self.attr['@key'] = 'key' + str(key)
-        
+
     def toggle(self, agent):
         # use different vocab to distinguish a picked key from a overlapping key
         agent.attr['@picked_key'] = 'picked_key' + str(self.key)
@@ -255,7 +255,7 @@ class PickableKey(PickableItem):
 
     def _get_display_symbol(self):
         return (u' k ', None, _on_colors[self.key % 8], None)
-        
+
 
 class PickableKeyOpenedDoor(GridItem):
     def __init__(self, attr, key=0):
@@ -268,7 +268,7 @@ class PickableKeyOpenedDoor(GridItem):
         self.isopen = False
 
     def update(self, game):
-        agent = game.items_bytype['agent'][0]        
+        agent = game.items_bytype['agent'][0]
         if agent.attr.get('@picked_key') == 'picked_key' + str(self.key):
             self.isopen = True
             self.attr['_reachable'] = True

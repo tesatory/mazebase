@@ -157,6 +157,18 @@ def run_episode(g, policy_net, featurizer, iactions):
             g.display_ascii()
             break
 
+def test_supervision(g, featurizer):
+    print('Init: ')
+    g.display_ascii()
+    state_and_action_pairs = g.get_supervision(featurizer)
+    print('Num steps: ', len(state_and_action_pairs))
+    print('Final: ')
+    g.display_ascii()
+    print('Finished: ', g.finished)
+    print('Goal at: ', g.items_bytype['goal'][0].attr['loc'])
+    print('Agent at: ', g.agent.attr['loc'])
+    print('Switches at: ', [s.attr['loc'] for s in g.items_bytype['cycle_switch']])
+
 if __name__ == '__main__':
     import mazebase.goto as goto
     import mazebase.blocked_door as blocked_door
@@ -186,6 +198,8 @@ if __name__ == '__main__':
                         help='plot training progress')
     parser.add_argument('--plot-env', dest='plot_env', type=str, help='plot env name')
     parser.add_argument('--eval-every', dest='eval_every', type=int, help='run evaluation after every X iterations')
+    parser.add_argument('--test-sup', dest='test_sup', action='store_true', default=False,
+                        help='test game\'s supervision')
 
     parser.set_defaults(
             num_workers=1,
@@ -196,7 +210,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
     args.naction_heads = [9]
 
-    print(args)
 
     #F = goto.Factory('goto',
     #            {'game_opts': {'map_width': 10, 'map_height': 10, 'step_cost': -.1,
@@ -238,11 +251,14 @@ if __name__ == '__main__':
     print('building ' + str(args.num_data) + ' trajectories')
     env_wrapper, factory, featurizer = config_env.env_maker_all(args.config_path)
     args.naction_heads = env_wrapper.num_actions
-    #D, factory, featurizer = DataBuilder(F, feat, bfi, {})
+
+    if args.test_sup:
+        test_supervision(factory.init_random_game(), featurizer)
+        exit()
+
     D = loader.DataBuilder(args.num_data, factory, featurizer, None, args)
     print('Training size: ', len(D.train_dataset_loader))
     print('Test size: ', len(D.test_dataset_loader))
-    #D.build(args.num_data)
 
     nwords = len(featurizer.dictionary['ivocab'])
     print('building model')

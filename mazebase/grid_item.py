@@ -5,6 +5,7 @@ from __future__ import print_function
 
 import random
 
+import mazebase.distance_utils as dut
 import mazebase.standard_grid_actions as standard_grid_actions
 
 _on_colors = []
@@ -335,6 +336,25 @@ def add_water(game, loc):
         '_reachable': True
     }
     game.build_add_item(attr, loc)
+
+
+def add_reachable_cycle_switches(game, nswitches, ncolors, from_loc):
+    ''' Add cycle switches that are reachable from a location (if possible).
+        i.e. the path is not blocked by wall etc.
+    Returns
+        True if all added cycle switches are reachable from location from_loc.
+    '''
+    all_reachable = True
+    reachable_locs = dut.all_reachable_locs(game, from_loc, empty=True)
+    if len(reachable_locs) >= nswitches:
+        switch_locs = random.sample(reachable_locs, nswitches)
+        for switch_loc in switch_locs:
+            add_cycle_switch(game, switch_loc, ncolors)
+    else:
+        game.display_ascii()
+        all_reachable = False
+        add_random_cycle_switches(game, nswitches, ncolors)
+    return all_reachable
 
 
 def add_random_cycle_switches(game, nswitches, ncolors):

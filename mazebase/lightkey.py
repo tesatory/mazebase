@@ -30,13 +30,20 @@ class Game(gg.GridGame2D):
                 'loc': loc
             }, color=random.randint(0, self.ncolors - 1))
         self.add_prebuilt_item(s)
-        gi.add_random_cycle_switches(self, self.nswitches, self.ncolors)
-        # always goal0.  fixme?
         gi.add_goal(self, self.sample_reachable_loc(ensure_empty=True), 0)
         gi.add_standard_items(self)
+
+        # agent
         self.agent = self.items_bytype['agent'][0]
         self.agent.replace_action('toggle_close',
                                   standard_grid_actions.toggle_close)
+
+        # whether switches added are reachable by the agent
+        self.switch_reachable = gi.add_reachable_cycle_switches(
+                self, self.nswitches, self.ncolors, self.agent.attr['loc'])
+        #gi.add_random_cycle_switches(self, self.nswitches, self.ncolors)
+        # always goal0.  fixme?
+
         self.finished = False
 
     def update(self):

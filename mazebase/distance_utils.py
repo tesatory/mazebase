@@ -82,6 +82,45 @@ def search_and_move(game, target_loc, display = False):
             game.display_ascii()
     return p, path, actions
 
+def dijkstra_touch_cost_all(game, source_loc):
+    W = game.mapsize[0]
+    big = 100*__BIG_COST
+    costs = {}
+    # hacky atm. dists[loc] for visited location will be set to BIG_COST such that
+    # dists.min resembles the behavior of the priority queue in standard dijkstra.
+    dists = torch.ones(game.mapsize[0]*game.mapsize[1])*big
+    d = torch.ones(game.mapsize[0]*game.mapsize[1])*big
+    dists[source_loc[0] + source_loc[1]*W] = 0
+    d[source_loc[0] + source_loc[1]*W] = 0
+    parents = {}
+    parents[source_loc] = None
+    loc = source_loc
+    known = {loc: True}
+    tcount = 0
+    while len(known) < len(dists):
+        tcount += 1
+        if tcount > 2000:
+            import pdb
+            pdb.set_trace()
+        nhb = get_neighbors(game, loc)
+        for n in nhb:
+            if costs.get(n) is None:
+                costs[n] = -score_loc(game, n)
+            if not known.get(n):
+                if dists[n[0] + n[1]*W] > costs[n] + dists[loc[0] + loc[1]*W]:
+                    dists[n[0] + n[1]*W] = costs[n] + dists[loc[0] + loc[1]*W]
+                    d[n[0] + n[1]*W] = dists[n[0] + n[1] * W]
+                    parents[n] = loc
+
+        dists[loc[0] + loc[1]*W] = big
+        known[loc] = True
+        val, idx = dists.min(0)
+        idx = idx[0]
+        w = idx % W
+        loc = (w, int((idx-w)/W))
+    return parents, d
+
+
 def dijkstra_touch_cost(game, source_loc, target_loc):
     if not game.is_loc_reachable(target_loc):
         return None, __BIG_COST
@@ -115,4 +154,19 @@ def dijkstra_touch_cost(game, source_loc, target_loc):
         idx = idx[0]
         w = idx % W
         loc = (w, int((idx-w)/W))
+
     return parents, dists[target_loc[0] + target_loc[1]*W]
+
+def all_reachable_locs(game, source_loc, empty=True):
+    reachable_locs = []
+    parents, dists = dijkstra_touch_cost_all(game, source_loc)
+    W = game.mapsize[0]
+    H = game.mapsize[1]
+    for i in range(W):
+        for j in range(H):
+            if dists[i + j * W] < __BIG_COST and game.is_loc_reachable((i,j)):
+                if empty and not game.is_loc_empty((i, j)):
+                    continue
+                reachable_locs.append((i, j))
+    return reachable_locs
+

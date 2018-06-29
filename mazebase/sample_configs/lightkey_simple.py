@@ -4,8 +4,8 @@ from mazebase.torch_featurizers import GridFeaturizer
 from mazebase.torch_featurizers import ObjFeaturizer
 
 def game_opts():
-    featurizer_class = GridFeaturizer
-    #featurizer_class = ObjFeaturizer
+    #featurizer_class = GridFeaturizer
+    featurizer_class = ObjFeaturizer
     games = {}
     opts = {}
     opts['featurizer'] = {}
@@ -19,8 +19,8 @@ def game_opts():
     for i in shared_static_opts:
         g_dict[i] = shared_static_opts[i]
     g_dict['fixed_goal'] = True
-    g_dict['map_width'] = [7, 7, 7, 7, 0]
-    g_dict['map_height'] = [7, 7, 7, 7, 0]
+    g_dict['map_width'] = [8, 8, 8, 8, 0]
+    g_dict['map_height'] = [8, 8, 8, 8, 0]
     g_dict['nblocks'] = [2, 2, 2, 2, 0]
     g_dict['nwater'] = [1, 1, 1, 1, 0]
     g_dict['nswitches'] = [1, 1, 1, 1, 0]

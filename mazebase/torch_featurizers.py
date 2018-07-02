@@ -116,24 +116,30 @@ class ObjFeaturizer(SentenceFeaturizer):
         opts['separate_loc'] = True
         super(ObjFeaturizer, self).__init__(opts, dictionary = dictionary)
         self.vocab = self.dictionary['vocab']
-        self.attr_dim = len(self.vocab) + 2    # +2 for including loc attr
+        self.attr_dim = len(self.vocab) + 3    # +3 for including loc attr and reachability
 
     def to_tensor(self, game, agent = None):
-        #print('vocab: ', vocab)
+        #print('vocab: ', self.vocab)
         S = self.to_sentence(game, agent = agent)
 
         attrs = []
+        # starts from 1 since game.items[0] is 'info'
+        item_idx = 1
         for item, loc in S:
             attr_item = torch.zeros(self.attr_dim)
-            #print(item)
+            #print(item, game.items[item_idx].attr['_type'])
+            # attr_item: x, y coordinates; other attributes, reachability
             attr_item[0] = loc[0]
             attr_item[1] = loc[1]
             for w in item:
                 attr_item[self.vocab[w] + 2] = 1
+            if game.items[item_idx].is_reachable():
+                attr_item[-1] = 1
             attrs.append(attr_item)
+            item_idx += 1
         out = torch.stack(attrs)
         #print('num items: ', len(S))
-        #print('len vocab: ', len(vocab))
+        #print('len vocab: ', len(self.vocab))
         #print(out)
         return out
 

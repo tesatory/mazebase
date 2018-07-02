@@ -218,7 +218,7 @@ class CycleSwitchOpenedDoor(GridItem):
     def _get_display_symbol(self):
         #        c = "\x1b[1;%dm" % (30 + self.color%8) + '0' + "\x1b[0m"
         if self.isopen:
-            return ('   ', None, None, None)
+            return (' 1 ', None, 'on_white', None)
         else:
             return (' 0 ', _colors[self.color % 8], 'on_white', ['bold'])
 

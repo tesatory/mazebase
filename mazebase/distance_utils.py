@@ -115,7 +115,8 @@ def dijkstra_touch_cost_all(game, source_loc):
         dists[loc[0] + loc[1]*W] = big
         known[loc] = True
         val, idx = dists.min(0)
-        idx = idx[0]
+        #idx = idx[0]  # deprecated: for pytorch 0.3
+        idx = idx.item()
         w = idx % W
         loc = (w, int((idx-w)/W))
     return parents, d
@@ -151,7 +152,8 @@ def dijkstra_touch_cost(game, source_loc, target_loc):
         dists[loc[0] + loc[1]*W] = big
         known[loc] = True
         val, idx = dists.min(0)
-        idx = idx[0]
+        #idx = idx[0]  # deprecated: for pytorch 0.3
+        idx = idx.item()
         w = idx % W
         loc = (w, int((idx-w)/W))
 

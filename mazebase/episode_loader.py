@@ -5,16 +5,17 @@ import torch.utils.data
 from tqdm import tqdm
 
 class DataBuilder:
-    def __init__(self, num_data, factory, featurizer, batchifier, args):
+    def __init__(self, num_epi, factory, featurizer, batchifier, args):
         self.args = args
         self.featurizer = featurizer
         self.factory = factory
         self.batchifier = batchifier
         self.batchsize = args.batch_size or 32
-        self.num_data = num_data
-        self._build(num_data)
+        self.num_epi = num_epi
+        self._build(num_epi)
 
     def _build(self, N):
+        # data: a list of state-action pairs
         data = []
         for _i in tqdm(range(N)):
             g = self.factory.init_random_game()
@@ -23,7 +24,7 @@ class DataBuilder:
                 data.append(s)
         self.data = data
         train_ratio = 0.9
-        val_start = int(self.num_data * train_ratio)
+        val_start = int(len(self.data) * train_ratio)
         training_data = self.data[:val_start]
         self.train_dataset_loader = torch.utils.data.DataLoader(
                     EpisodeSampler(training_data, self.factory),

@@ -353,6 +353,11 @@ def add_reachable_cycle_switches(game, nswitches, ncolors, from_loc):
     else:
         all_reachable = False
         add_random_cycle_switches(game, nswitches, ncolors)
+
+    switches = game.items_bytype['cycle_switch']
+    agent_loc = game.agent.attr['loc']
+    game.items_bytype['cycle_switch'] = sorted(switches,
+            key=lambda s: s.attr['loc'][0] * game.mapsize[1] + s.attr['loc'][1])
     return all_reachable
 
 

@@ -60,11 +60,14 @@ class Game(gg.GridGame2D):
         r += self.agent.touch_cost()
         return r
 
-    def get_supervision(self, featurizer):
+    def get_supervision(self, featurizer, additional_featurizers=[]):
         gloc = self.items_bytype['goal'][0].attr['loc']
         path = []
         all_actions = []
         all_states = []
+        num_featurizers = len(additional_featurizers)
+        if num_featurizers > 0:
+            additional_rep = [[]] * num_featurizers
 
         door = self.items_bytype['cycle_switch_opened_door'][0]
         p, cost = dut.dijkstra_touch_cost(self, self.agent.attr['loc'], gloc)
@@ -75,16 +78,24 @@ class Game(gg.GridGame2D):
                 switch_loc = switch.attr['loc']
                 p_switch, cost_switch = dut.dijkstra_touch_cost(self, self.agent.attr['loc'], switch_loc)
                 if cost_switch >= dut.get_big_cost():
-                    return [[featurizer.featurize(self), 'stop']]
+                    if num_featurizers == 0:
+                        return [[featurizer.featurize(self), 'stop']]
+                    else:
+                        feat_list = [f.featurize(self) for f in additional_featurizers]
+                        return [[featurizer.featurize(self), 'stop', *feat_list]]
                 path = dut.collect_path(p_switch, switch_loc)
                 actions = dut.path_to_actions(path)
                 for a in actions:
                     all_states.append(featurizer.featurize(self))
+                    for i_f in range(num_featurizers):
+                        additional_rep[i_f].append(additional_featurizers[i_f].featurize(self))
                     self.act(a)
                     self.update()
                 all_actions += actions
                 while switch.color != door.color:
                     all_states.append(featurizer.featurize(self))
+                    for i_f in range(num_featurizers):
+                        additional_rep[i_f].append(additional_featurizers[i_f].featurize(self))
                     all_actions.append('toggle_close')
                     self.act('toggle_close')
                     self.update()
@@ -94,10 +105,15 @@ class Game(gg.GridGame2D):
         actions = dut.path_to_actions(path)
         for a in actions:
             all_states.append(featurizer.featurize(self))
+            for i_f in range(num_featurizers):
+                additional_rep[i_f].append(additional_featurizers[i_f].featurize(self))
             self.act(a)
             self.update()
         all_actions += actions
-        return list(zip(all_states, all_actions))
+        if num_featurizers == 0:
+            return list(zip(all_states, all_actions))
+        else:
+            return list(zip(all_states, all_actions, *additional_rep))
 
 
 class Factory(gf.GameFactory):

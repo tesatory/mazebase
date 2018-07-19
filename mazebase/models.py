@@ -17,9 +17,9 @@ def build_nonlin(nonlin):
 class Policy(nn.Module):
     def __init__(self, args, num_inputs):
         super(Policy, self).__init__()
-        self.affine1 = nn.Linear(num_inputs, 64)
-        self.affine2 = nn.Linear(64, 64)
-        self.heads = nn.ModuleList([nn.Linear(64, o) for o in args.naction_heads])
+        self.affine1 = nn.Linear(num_inputs, 128)
+        self.affine2 = nn.Linear(128, 128)
+        self.heads = nn.ModuleList([nn.Linear(128, o) for o in args.naction_heads])
 
     def forward(self, x):
         '''

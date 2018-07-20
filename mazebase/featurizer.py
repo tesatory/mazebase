@@ -83,7 +83,7 @@ if __name__ == '__main__':
     import mazebase.goto as goto
     import mazebase.switches as switches
     import mazebase.game_factory as gf
-    
+
     games = {}
     opts = {}
     opts['featurizer'] = {}

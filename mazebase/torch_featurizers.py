@@ -72,11 +72,11 @@ class SparseSentenceFeaturizer(SentenceFeaturizer):
         vocab = self.dictionary['vocab']
         count = 0
         starts = 0
-        for item in X:
+        for item, loc in X:
             item_starts[count] = starts
             count += 1
             starts += len(item)
-            lx = torch.LongTensor([vocab[j] for j in item])
+            lx = torch.LongTensor([vocab[j] for j in item] + [loc[0], loc[1]])
             x = torch.cat((x,lx))
         return [x, item_starts]
 

@@ -91,17 +91,19 @@ class GridFeaturizer(SentenceFeaturizer):
     def __init__(self, opts, dictionary = None):
         opts['separate_loc'] = True
         super(GridFeaturizer, self).__init__(opts, dictionary = dictionary)
+        if self.opts.get('egocentric_coordinates'):
+            self.W = self.opts['visible_range']*2-1
+            self.H = self.opts['visible_range']*2-1
+        else:
+            # TODO: or we can get the size from factory
+            self.W = self.opts['max_map_sizes'][0]
+            self.H = self.opts['max_map_sizes'][1]
+        self.C = len(self.dictionary['vocab'])
 
     def to_tensor(self, game, agent = None):
         vocab = self.dictionary['vocab']
         S = self.to_sentence(game, agent = agent)
-        if self.opts.get('egocentric_coordinates'):
-            x = torch.zeros(self.opts['visible_range']*2-1,
-                            self.opts['visible_range']*2-1, len(vocab))
-        else:
-            # TODO: or we can get the size from factory
-            x = torch.zeros(self.opts['max_map_sizes'][0],
-                            self.opts['max_map_sizes'][1], len(vocab))
+        x = torch.zeros(self.W, self.H, self.C)
         for item, loc in S:
             for w in item:
                 x[loc[0]][loc[1]][vocab[w]] += 1

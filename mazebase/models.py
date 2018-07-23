@@ -17,8 +17,8 @@ def build_nonlin(nonlin):
 class Policy(nn.Module):
     def __init__(self, args, num_inputs):
         super(Policy, self).__init__()
-        self.affine1 = nn.Linear(num_inputs, 128)
-        self.affine2 = nn.Linear(128, 128)
+        self.affine1 = nn.Linear(num_inputs, 256)
+        self.affine2 = nn.Linear(256, 128)
         self.heads = nn.ModuleList([nn.Linear(128, o) for o in args.naction_heads])
 
     def forward(self, x):
@@ -27,6 +27,24 @@ class Policy(nn.Module):
             x: [batch_size x feature]
         '''
         batch_size = x.size()[0]
+        x = x.view(batch_size, -1)
+        x = F.tanh(self.affine1(x))
+        x = F.tanh(self.affine2(x))
+        return [F.log_softmax(head(x)) for head in self.heads]
+
+class ConvPolicy(Policy):
+    def __init__(self, args, num_input_channels, num_output_channels, W, H):
+        super(ConvPolicy, self).__init__(args, num_output_channels * W * H)
+        self.conv1 = nn.Conv2d(num_input_channels, 24, 3, stride=1, padding=1)
+        self.conv2 = nn.Conv2d(24, num_output_channels, 3, stride=1, padding=1)
+
+    def forward(self, x):
+        batch_size = x.size()[0]
+        #x_im = torch.permute(0, 4, 2, 3)
+        x = torch.transpose(x, 1, 3)
+        x = torch.transpose(x, 2, 3)
+        x = F.tanh(self.conv1(x))
+        x = self.conv2(x)
         x = x.view(batch_size, -1)
         x = F.tanh(self.affine1(x))
         x = F.tanh(self.affine2(x))

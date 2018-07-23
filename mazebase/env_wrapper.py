@@ -25,6 +25,11 @@ class MazeBaseWrapper(object):
             return obs.size(0)
 
     @property
+    def obs_size(self):
+        obs = self.get_obs()
+        return obs.size()
+
+    @property
     def num_actions(self):
         return [len(self.factory.actions)]
 

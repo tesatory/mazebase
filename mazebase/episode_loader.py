@@ -17,6 +17,8 @@ class EpisodeSampler(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         state, action = self.data[idx]
+        if isinstance(state, list):
+            state[0] = state[0].double()
         return {'state': state,
                 'action': torch.LongTensor([self.factory.actions[action]]) }
 
@@ -46,7 +48,7 @@ class DataBuilder:
         self.test_dataset_loader = torch.utils.data.DataLoader(
                     self.sampler(test_data, self.factory),
                     batch_size=self.args.batch_size,
-                    shuffle=False,
+                    shuffle=True,
                     num_workers=self.args.num_workers)
 
     def supervision_data(self, N):

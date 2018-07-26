@@ -98,7 +98,7 @@ class GridFeaturizer(SentenceFeaturizer):
             # TODO: or we can get the size from factory
             self.W = self.opts['max_map_sizes'][0]
             self.H = self.opts['max_map_sizes'][1]
-        self.C = len(self.dictionary['vocab'])
+        self.C = len(self.dictionary['vocab']) + 1
 
     def to_tensor(self, game, agent = None):
         vocab = self.dictionary['vocab']
@@ -107,6 +107,10 @@ class GridFeaturizer(SentenceFeaturizer):
         for item, loc in S:
             for w in item:
                 x[loc[0]][loc[1]][vocab[w]] += 1
+        for i in range(self.W):
+            for j in range(self.H):
+                # last index: reachability
+                x[i][j][-1] = int(game.is_loc_reachable((i,j)))
         return x
 
     def featurize(self, game):

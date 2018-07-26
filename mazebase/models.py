@@ -32,24 +32,48 @@ class Policy(nn.Module):
         x = F.tanh(self.affine2(x))
         return [F.log_softmax(head(x)) for head in self.heads]
 
-class ConvPolicy(Policy):
-    def __init__(self, args, num_input_channels, num_output_channels, W, H):
-        super(ConvPolicy, self).__init__(args, num_output_channels * W * H)
-        self.conv1 = nn.Conv2d(num_input_channels, 24, 3, stride=1, padding=1)
-        self.conv2 = nn.Conv2d(24, num_output_channels, 3, stride=1, padding=1)
+class Conv(nn.Module):
+    def __init__(self, num_input_channels, num_output_channels, hiddens=[], act=nn.ReLU, kernel_size=1):
+        super(Conv, self).__init__()
+        self.act = act()
+        if len(hiddens) == 0:
+            self.conv = nn.Conv2d(num_input_channels, num_output_channels, kernel_size, stride=1, padding=1)
+        else:
+            conv_layers = []
+            in_dim = num_input_channels
+            for hdim in hiddens:
+                self.clayer = nn.Conv2d(in_dim, hdim, kernel_size, stride=1, padding=1)
+                conv_layers.append(self.clayer)
+                conv_layers.append(self.act)
+                in_dim = hdim
+            self.clayer = nn.Conv2d(hdim, num_output_channels, kernel_size, stride=1, padding=1)
+            conv_layers.append(self.clayer)
+            conv_layers.append(self.act)
+            self.conv = nn.Sequential(*conv_layers)
 
     def forward(self, x):
         batch_size = x.size()[0]
-        #x_im = torch.permute(0, 4, 2, 3)
         x = torch.transpose(x, 1, 3)
         x = torch.transpose(x, 2, 3)
-        x = F.tanh(self.conv1(x))
-        x = self.conv2(x)
+        x = self.conv(x)
         x = x.view(batch_size, -1)
+        return x
+
+
+class ConvPolicy(Policy):
+    def __init__(self, args, num_input_channels, num_output_channels, W, H):
+        super(ConvPolicy, self).__init__(args, num_output_channels * W * H)
+        self.conv = Conv(num_input_channels, num_output_channels, [24])
+
+    def forward(self, x):
+        x = self.conv(x)
         x = F.tanh(self.affine1(x))
         x = F.tanh(self.affine2(x))
         return [F.log_softmax(head(x)) for head in self.heads]
 
+class RelPolicy(ConvPolicy):
+    def __init__(self, args, num_input_channels, num_output_channels, W, H):
+        super(RelPolicy, self).__init__(args, args, num_input_channels, num_output_channels, W, H)
 
 class ActionValueModel(nn.Module):
     def __init__(self, args, num_inputs):

@@ -15,11 +15,12 @@ def build_nonlin(nonlin):
         return nn.ReLU(inplace = True)
 
 class Policy(nn.Module):
-    def __init__(self, args, num_inputs):
+    def __init__(self, args, num_inputs, act=nn.ReLU):
         super(Policy, self).__init__()
         self.affine1 = nn.Linear(num_inputs, 256)
         self.affine2 = nn.Linear(256, 128)
         self.heads = nn.ModuleList([nn.Linear(128, o) for o in args.naction_heads])
+        self.act = act()
 
     def forward(self, x):
         '''
@@ -28,52 +29,50 @@ class Policy(nn.Module):
         '''
         batch_size = x.size()[0]
         x = x.view(batch_size, -1)
-        x = F.tanh(self.affine1(x))
-        x = F.tanh(self.affine2(x))
+        x = self.act(self.affine1(x))
+        x = self.affine2(x)
         return [F.log_softmax(head(x)) for head in self.heads]
 
 class Conv(nn.Module):
-    def __init__(self, num_input_channels, num_output_channels, hiddens=[], act=nn.ReLU, kernel_size=1):
+    def __init__(self, num_input_channels, num_output_channels, hiddens=[], act=nn.ReLU, kernel_size=3):
         super(Conv, self).__init__()
         self.act = act()
+        padding = (kernel_size - 1) / 2
         if len(hiddens) == 0:
-            self.conv = nn.Conv2d(num_input_channels, num_output_channels, kernel_size, stride=1, padding=1)
+            self.conv = nn.Conv2d(num_input_channels, num_output_channels, kernel_size, stride=1, padding=padding)
         else:
             conv_layers = []
             in_dim = num_input_channels
             for hdim in hiddens:
-                self.clayer = nn.Conv2d(in_dim, hdim, kernel_size, stride=1, padding=1)
+                self.clayer = nn.Conv2d(in_dim, hdim, kernel_size, stride=1, padding=padding)
                 conv_layers.append(self.clayer)
                 conv_layers.append(self.act)
                 in_dim = hdim
-            self.clayer = nn.Conv2d(hdim, num_output_channels, kernel_size, stride=1, padding=1)
+            self.clayer = nn.Conv2d(hdim, num_output_channels, kernel_size, stride=1, padding=padding)
             conv_layers.append(self.clayer)
-            conv_layers.append(self.act)
+            #conv_layers.append(self.act)
             self.conv = nn.Sequential(*conv_layers)
 
     def forward(self, x):
-        batch_size = x.size()[0]
         x = torch.transpose(x, 1, 3)
         x = torch.transpose(x, 2, 3)
         x = self.conv(x)
-        x = x.view(batch_size, -1)
         return x
 
 
 class ConvPolicy(Policy):
-    def __init__(self, args, num_input_channels, num_output_channels, W, H):
+    def __init__(self, args, num_input_channels, num_output_channels, W, H, act=nn.ReLU):
         super(ConvPolicy, self).__init__(args, num_output_channels * W * H)
         self.conv = Conv(num_input_channels, num_output_channels, [24])
+        self.act = act()
 
     def forward(self, x):
+        batch_size = x.size()[0]
         x = self.conv(x)
-        x = F.tanh(self.affine1(x))
-        x = F.tanh(self.affine2(x))
+        x = x.view(batch_size, -1)
+        x = self.act(self.affine1(x))
+        x = self.affine2(x)
         return [F.log_softmax(head(x)) for head in self.heads]
-
-class RelPolicy(ConvPolicy):
-    def __init__(self, args, num_input_channels, num_output_channels, W, H):
-        super(RelPolicy, self).__init__(args, args, num_input_channels, num_output_channels, W, H)
 
 class ActionValueModel(nn.Module):
     def __init__(self, args, num_inputs):

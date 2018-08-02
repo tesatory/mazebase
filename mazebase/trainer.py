@@ -5,11 +5,11 @@ from collections import namedtuple
 import time
 import visdom
 import numpy as np
-import mazebase.action_utils as action_utils
+
+from mazebase.episode import EpisodeRunner
 #from multi_threading import *
 
 import copy
-
 
 Transition = namedtuple('Transition', ('state', 'action', 'mask', 'next_state',
                                        'reward'))
@@ -35,49 +35,6 @@ class Memory(object):
     def __len__(self):
         return len(self.memory)
 
-class EpisodeRunner(object):
-    def __init__(self, env_maker, policy_net, value_net, args):
-        self.env = env_maker(args.config_path)
-        self.display = False
-        self.policy_net = policy_net
-        #fixme
-        self.value_net = value_net
-        self.args = args
-
-    def quit(self):
-        pass
-
-    def reset(self):
-        pass
-
-    def get_episode(self):
-        env = self.env
-        policy_net = self.policy_net
-        args = self.args
-        episode = []
-        state = self.env.reset()
-        if self.display:
-            env.display()
-        for t in range(args.max_steps):
-            #TODO get rid of action_utils
-            action = action_utils.select_action(args, policy_net, state)
-            action, actual = action_utils.translate_action(args, env, action)
-            next_state, reward, done = env.step(actual)
-            if self.display:
-                env.display()
-            mask = 1
-            done = done or t == args.max_steps - 1
-            if done:
-                mask = 0
-            if args.__NUMPY__:
-                episode.append([state, np.array([action]), mask, next_state, reward])
-            else:
-                episode.append([state, action, mask, next_state, reward])
-            state = next_state
-            if done:
-                break
-        return episode
-
 
 class Trainer:
     def __init__(self, runner, optimizer, args, batchifier = None):
@@ -91,6 +48,8 @@ class Trainer:
         log = dict()
         log['#batch'] = LogField(list(), False, '')
         log['reward'] = LogField(list(), True, '#batch')
+        log['succ_rate'] = LogField(list(), True, '#batch')
+        log['avg_steps'] = LogField(list(), True, '#batch')
         self.log = log
         if args.plot:
             self.vis = visdom.Visdom(env=args.plot_env, port=args.plot_port)
@@ -110,24 +69,27 @@ class Trainer:
             epoch_begin_time = time.time()
             memory = Memory()
             num_steps = 0
-            reward_batch = 0
             num_batch = 0
             num_episodes = 0
+            num_successes = 0
+            reward_batch = 0
             while num_steps < args.batch_size:
                 if num_steps == 0:
                     # discard episodes in buffer since model has changed
                     runner.reset()
-                episode = runner.get_episode()
-                t = len(episode)
+                episode, epi_reward, epi_success, t = runner.get_episode()
                 num_steps += (t+1)
                 self.num_total_steps += (t+1)
                 num_episodes += 1
-                reward_batch += sum(x[4] for x in episode)
+                reward_batch += epi_reward
+                num_successes += epi_success
                 num_batch += 1
                 for tup in episode:
                     memory.push(*tup)
 
-            reward_batch /= num_batch
+            reward_batch = reward_batch / num_batch
+            success_rate = 1.0 * num_successes / num_batch
+            avg_steps = 1.0 * num_steps / num_batch
             batch = memory.sample()
 
             #fixme value net
@@ -145,13 +107,15 @@ class Trainer:
             epoch_time = time.time() - epoch_begin_time
             if self.i_iter % args.log_interval == 0:
                 np.set_printoptions(precision=4)
-                print('Iteration {}\tSteps {}\tAverage reward {:10.4f}\tTime taken {:.2f}s'.format(
-                    self.i_iter, self.num_total_steps, reward_batch, epoch_time
+                print('Iteration {}\tSteps {}\tAverage reward {:6.4f}\tSucc rate: {:.4f}\tAvg steps: {:5.4f}\tTime taken {:.2f}s'.format(
+                    self.i_iter, self.num_total_steps, reward_batch, success_rate, avg_steps, epoch_time
                 ))
                 log['#batch'].data.append(self.i_iter)
                 log['reward'].data.append(reward_batch)
-                if args.plot:
+                log['succ_rate'].data.append(success_rate)
+                log['avg_steps'].data.append(avg_steps)
 
+                if args.plot:
                     for k, v in log.items():
                         if v.plot:
                             self.vis.line(np.asarray(v.data), np.asarray(log[v.x_axis].data),

@@ -15,6 +15,7 @@ import mazebase.standard_grid_actions as standard_grid_actions
 class Game(gg.GridGame2D):
     def __init__(self, opts):
         super(Game, self).__init__(opts)
+        self.goal_reward = 3.0
         self.nblocks = int(opts.get('nblocks') or 0)
         self.nwater = int(opts.get('nwater') or 0)
         self.nswitches = opts.get('nswitches') or 1
@@ -58,6 +59,8 @@ class Game(gg.GridGame2D):
     def get_reward(self):
         r = self.opts['step_cost']
         r += self.agent.touch_cost()
+        if self.finished:
+            r += self.goal_reward
         return r
 
     def get_supervision(self, featurizer, additional_featurizers=[]):

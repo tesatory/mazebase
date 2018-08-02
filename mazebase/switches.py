@@ -14,6 +14,7 @@ import mazebase.game_factory as gf
 class Game(gg.GridGame2D):
     def __init__(self, opts):
         super(Game, self).__init__(opts)
+        self.goal_reward = 3.0
         self.goal_loc = self.sample_reachable_loc(ensure_empty=True)
         self.nblocks = int(opts.get('nblocks') or 0)
         self.nwater = int(opts.get('nwater') or 0)
@@ -48,12 +49,14 @@ class Game(gg.GridGame2D):
     def get_reward(self):
         r = self.opts['step_cost']
         r += self.agent.touch_cost()
+        if self.finished:
+            r += self.goal_reward
         return r
 
 class Factory(gf.GameFactory):
     def __init__(self, game_name, opts, Game):
         super(Factory, self).__init__(game_name, opts, Game)
-        ro = ('map_width', 'map_height', 'step_cost', 'water_cost', 'nblocks', 
+        ro = ('map_width', 'map_height', 'step_cost', 'water_cost', 'nblocks',
               'nwater', 'explicit', 'nswitches', 'ncolors')
         self.games[game_name]['required_opts'] = ro
 

@@ -27,7 +27,8 @@ def env_maker_all(config_path, args=None):
         return env_wrapper.MazeBaseWrapper(F, state_featurizer, args), F, state_featurizer
 
 def env_maker(config_path):
-    env, _, _ = env_maker_all(config_path)
+    config = env_maker_all(config_path)
+    env = config[0]
     return env
 
 

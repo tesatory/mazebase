@@ -10,15 +10,15 @@ def convert_state_to_variable(state, use_numpy):
         ns = []
         for i,j in enumerate(state):
             if use_numpy:
-                ns.append(Variable(torch.from_numpy(j),volatile = True))
+                ns.append(Variable(torch.from_numpy(j)))
             else:
-                ns.append(Variable(j, volatile = True))
+                ns.append(Variable(j))
         return ns
     else:
         if use_numpy:
-            state = Variable(torch.from_numpy(state).unsqueeze(0), volatile = True)
+            state = Variable(torch.from_numpy(state).unsqueeze(0))
         else:
-            state = Variable(state.unsqueeze(0), volatile = True )
+            state = Variable(state.unsqueeze(0))
         return state
 
 def select_action(args, policy_net, state):
@@ -29,7 +29,7 @@ def select_action(args, policy_net, state):
 
 def translate_action(args, env, action):
     # environment takes discrete action
-    action = [x.squeeze().data[0] for x in action]
+    action = [x.squeeze().data.item() for x in action]
     actual = action
     return action, actual
-    
+

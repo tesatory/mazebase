@@ -9,16 +9,25 @@ def load_config(config_path):
     return config.game_opts()
 
 def env_maker_all(config_path, args=None):
-    game_opts, games, state_feat_class, attr_feat_class = load_config(config_path)
+    configs = load_config(config_path)
+    if len(configs) == 3:
+        game_opts, games, state_feat_class = configs
+    else:
+        # when additional (object-oriented) featurizer is needed
+        game_opts, games, state_feat_class, attr_feat_class = configs
     F = gf.GameFactory(None, None, None)
     for g in games:
         F += games[g].Factory(g, game_opts[g], games[g].Game)
-    attr_featurizer = attr_feat_class(game_opts['featurizer'], F.dictionary)
     state_featurizer = state_feat_class(game_opts['featurizer'], F.dictionary)
-    return env_wrapper.MazeBaseWrapper(F, state_featurizer, args), F, attr_featurizer, state_featurizer
 
-def env_maker():
-    env, _, _ = env_maker_all()
+    if len(configs) > 3:
+        attr_featurizer = attr_feat_class(game_opts['featurizer'], F.dictionary)
+        return env_wrapper.MazeBaseWrapper(F, state_featurizer, args), F, attr_featurizer, state_featurizer
+    else:
+        return env_wrapper.MazeBaseWrapper(F, state_featurizer, args), F, state_featurizer
+
+def env_maker(config_path):
+    env, _, _ = env_maker_all(config_path)
     return env
 
 

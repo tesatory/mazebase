@@ -38,14 +38,15 @@ parser.add_argument('--tau', type=float, default=1.0, metavar='G',
                     help='gae')
 parser.add_argument('--seed', type=int, default=-1, metavar='N',
                     help='random seed')
-parser.add_argument('--batch-size', '-b', type=int, default=1500, metavar='N',
+parser.add_argument('--batch-size', '-b', dest='batch_size', type=int, default=1500, metavar='N',
                     help='batch size')
 parser.add_argument('--log-interval', type=int, default=1, metavar='N',
                     help='interval between training status logs (default: 10)')
 parser.add_argument('--normalize_rewards', action='store_true', default=False,
                     help='render the environment')
-parser.add_argument('--lrate', type=float, default=1e-2, metavar='G',
-                    help='learning rate (default: 1e-2)')
+parser.add_argument('--lrate', type=float, default=1e-3, metavar='G',
+                    help='learning rate (default: 1e-3)')
+parser.add_argument('--optimizer', type=str, help='adam, rmsprop, adagrad, or sgd')
 parser.add_argument('--entr', type=float, default=0, metavar='G',
                     help='entropy regularization')
 parser.add_argument('--nthreads', type=int, default=10,
@@ -53,13 +54,18 @@ parser.add_argument('--nthreads', type=int, default=10,
 parser.add_argument('--config_path', default="config/test.py",
                     help='path to config file')
 parser.add_argument('--gpu', default=False, action="store_true", help='use GPU')
-parser.add_argument('--max_steps', default=20, type=int, help='force to end the game after this many steps')
+parser.add_argument('--max_steps', default=50, type=int, help='force to end the game after this many steps')
 parser.add_argument('--num_iterations', default=10000, type=int, help='number of episodes')
 parser.add_argument('--plot', action='store_true', default=False,
                     help='plot training progress')
-parser.add_argument('--plot_env', default='main', type=str, help='plot env name')
-parser.add_argument('--model_type', default='fc', type=str, help='fc or commnet')
+parser.add_argument('--plot-env', dest='plot_env', default='main', type=str, help='plot env name')
+parser.add_argument('--plot-port', dest='plot_port', default=6666, type=int, help='plot env name')
+parser.add_argument('--model_type', default='fc', type=str, help='fc, conv or commnet')
 
+parser.set_defaults(
+        optimizer='adam',
+        batch_size=1500
+)
 
 args = parser.parse_args()
 
@@ -80,6 +86,11 @@ if args.model_type == 'fc':
     policy_net = models.Policy(args, num_inputs)
     value_net = models.Value(num_inputs)
     batchifier = None
+if args.model_type == 'conv':
+    grid_feat = env.featurizer
+    num_in_channels, W, H = grid_feat.C, grid_feat.W, grid_feat.H
+    policy_net = models.ConvPolicy(args, num_in_channels, 36, W, H).cuda()
+    value_net = models.Value(num_inputs)
 elif args.model_type == 'commnet':
     batchifier = tfs.SparseSentenceBatchifier
     nwords = len(env.featurizer.dictionary['ivocab'])
@@ -92,17 +103,21 @@ if args.seed >= 0:
 policy_net.share_memory()
 value_net.share_memory()
 
-optimizer = optim.RMSprop(torch.nn.ModuleList([policy_net, value_net]).parameters(),
-    lr = args.lrate, alpha=0.97, eps=1e-6)
+if args.optimizer == 'rms':
+    optimizer = optim.RMSprop(torch.nn.ModuleList([policy_net, value_net]).parameters(),
+            lr = args.lrate, alpha=0.97, eps=1e-6)
+elif args.optimizer == 'adam':
+    optimizer = optim.Adam(list(policy_net.parameters()), lr = args.lrate)
+    #attr_optimizer = optim.Adam(list(attr_model.parameters()), lr = args.lrate)
 
 
 if args.nthreads > 1:
     def build_eprunner():
-        return trainer.EpisodeRunner(env_maker, policy_net, value_net, args)
+        return trainer.EpisodeRunner(config_env.env_maker, policy_net, value_net, args)
 
     runner = tt.ThreadedEpisodeRunner(args, build_eprunner)
 else:
-    runner = trainer.EpisodeRunner(env_maker, policy_net, value_net, args)
+    runner = trainer.EpisodeRunner(config_env.env_maker, policy_net, value_net, args)
 
 
 

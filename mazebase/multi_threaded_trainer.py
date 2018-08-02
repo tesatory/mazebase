@@ -31,7 +31,7 @@ class ThreadedWorker(mp.Process):
                 episode = self.episode_runner.get_episode()
                 share_memory(episode)
                 self.queue.put(episode)
-            
+
 
 class ThreadedEpisodeRunner(object):
     def __init__(self, args, runner_maker):

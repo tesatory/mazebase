@@ -31,7 +31,7 @@ class Policy(nn.Module):
         x = x.view(batch_size, -1)
         x = self.act(self.affine1(x))
         x = self.affine2(x)
-        return [F.log_softmax(head(x)) for head in self.heads]
+        return [F.log_softmax(head(x), dim=-1) for head in self.heads]
 
 class Conv(nn.Module):
     def __init__(self, num_input_channels, num_output_channels, hiddens=[], act=nn.ReLU, kernel_size=3):

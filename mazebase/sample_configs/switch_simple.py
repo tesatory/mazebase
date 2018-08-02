@@ -10,7 +10,7 @@ def game_opts():
     opts = {}
     opts['featurizer'] = {}
     shared_static_opts = {}
-    shared_static_opts['step_cost'] = -.1
+    shared_static_opts['step_cost'] = -.05
     shared_static_opts['water_cost'] = -.2
 
     #####################################
@@ -30,11 +30,11 @@ def game_opts():
                 'featurizer': opts['featurizer']}
     opts['switches'] = switches_opts
     games['switches'] = switches
-    
+
     #fixme:
     h = opts['switches']['game_opts']['map_height'].max_possible()
     w = opts['switches']['game_opts']['map_width'].max_possible()
     opts['featurizer']['max_map_sizes'] = (w,h)
-    
+
     return opts, games, featurizer_class
 

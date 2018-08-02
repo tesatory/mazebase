@@ -37,7 +37,7 @@ class Memory(object):
 
 class EpisodeRunner(object):
     def __init__(self, env_maker, policy_net, value_net, args):
-        self.env = env_maker()
+        self.env = env_maker(args.config_path)
         self.display = False
         self.policy_net = policy_net
         #fixme
@@ -93,7 +93,7 @@ class Trainer:
         log['reward'] = LogField(list(), True, '#batch')
         self.log = log
         if args.plot:
-            self.vis = visdom.Visdom(env=args.plot_env)
+            self.vis = visdom.Visdom(env=args.plot_env, port=args.plot_port)
 
     def run(self, num_iteration):
         args = self.args

@@ -43,7 +43,8 @@ class MazeBaseWrapper(object):
                 obs = obs.view(-1).numpy()
         else:
             #fixme
-            obs = obs.view(-1)
+            #obs = obs.view(-1)
+            pass
         return obs
 
     def reset(self):

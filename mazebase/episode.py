@@ -32,6 +32,8 @@ class EpisodeRunner(object):
             env.display()
         success = 0
         for t in range(args.max_steps):
+            if args.gpu:
+                state = state.cuda()
             #TODO get rid of action_utils
             action = action_utils.select_action(args, policy_net, state)
             action, actual = action_utils.translate_action(args, env, action)

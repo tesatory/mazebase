@@ -145,7 +145,7 @@ def run_episode(g, policy_net, featurizer, iactions):
         #todo recursive conversion to Variable
         #for i,j in enumerate(x):
         #    x[i] = Variable(j)
-        x = Variable(x.view(-1))
+        x = Variable(x.view(1, -1))
         p = policy_net(x)
         a = torch.multinomial(torch.exp(p[0].data.squeeze()),1)
         a = iactions[a[0]]

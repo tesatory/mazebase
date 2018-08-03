@@ -3,18 +3,18 @@ from __future__ import division
 from __future__ import unicode_literals
 from __future__ import print_function
 
+import argparse
+from collections import namedtuple
+import os
+
 import torch
 import torch.multiprocessing
-
 # the reason for this flag is because python seems to be mega-slow with the linux-default of
 # file-descriptor based sharing in pytorch. The actual cause was tracked down python internals, where
 # python.multiprocessing.resource_sharer.DupFd.detach() is unbearably slow
 torch.multiprocessing.set_sharing_strategy('file_system')
-
 from torch import optim
 
-import argparse
-from collections import namedtuple
 
 import mazebase.game_factory as gf
 import mazebase.trainer as trainer
@@ -54,6 +54,7 @@ parser.add_argument('--nthreads', type=int, default=10,
 parser.add_argument('--config_path', default="config/test.py",
                     help='path to config file')
 parser.add_argument('--gpu', default=False, action="store_true", help='use GPU')
+parser.add_argument('--cuda', type=str, help='GPU device number')
 parser.add_argument('--max_steps', default=50, type=int, help='force to end the game after this many steps')
 parser.add_argument('--num_iterations', default=10000, type=int, help='number of episodes')
 parser.add_argument('--plot', action='store_true', default=False,
@@ -65,12 +66,16 @@ parser.add_argument('--model-type', dest='model_type', type=str, help='fc, conv 
 parser.set_defaults(
         optimizer='adam',
         batch_size=1500,
-        model_type='conv'
+        model_type='conv',
+        cuda='1'
 )
+
 
 args = parser.parse_args()
 
 args.__NUMPY__ = False
+
+os.environ['CUDA_VISIBLE_DEVICES'] = args.cuda
 
 print(args)
 
@@ -89,10 +94,16 @@ if args.model_type == 'fc':
     value_net = models.Value(num_inputs)
     batchifier = None
 if args.model_type == 'conv':
+    #num_inputs = env.observation_dim
     grid_feat = env.featurizer
     num_in_channels, W, H = grid_feat.C, grid_feat.W, grid_feat.H
-    policy_net = models.ConvPolicy(args, num_in_channels, 36, W, H).cuda()
+    num_inputs = num_in_channels * W * H
+    policy_net = models.ConvPolicy(args, num_in_channels, 36, W, H)
     value_net = models.Value(num_inputs)
+    if args.gpu:
+        policy_net = policy_net.cuda()
+        value_net = value_net.cuda()
+    batchifier = None
 elif args.model_type == 'commnet':
     batchifier = tfs.SparseSentenceBatchifier
     nwords = len(env.featurizer.dictionary['ivocab'])

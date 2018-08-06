@@ -121,7 +121,6 @@ if args.optimizer == 'rmsprop':
             lr = args.lrate, alpha=0.97, eps=1e-6)
 elif args.optimizer == 'adam':
     optimizer = optim.Adam(list(policy_net.parameters()), lr = args.lrate)
-    #attr_optimizer = optim.Adam(list(attr_model.parameters()), lr = args.lrate)
 
 
 if args.nthreads > 1:

@@ -284,6 +284,48 @@ class PickableKeyOpenedDoor(GridItem):
         else:
             return (' k ', _colors[self.key % 8], 'on_white', ['bold'])
 
+class BlockActivatedPressurePlate(GridItem):
+    def __init__(self, attr, color=0):
+        super(BlockActivatedPressurePlate, self).__init__(attr)
+        self.attr['_type'] = 'block_activated_pressure_plate'
+        self.attr['@type'] = 'block_activated_pressure_plate'
+        self.attr['@color'] = 'color' + str(color)
+        self.attr['_reachable'] = True
+        self.color = color
+        self.is_activated = False
+
+    def update(self, game):
+        # update is called after added to game (loc is set)
+        myloc = self.attr['loc']
+        self.is_activated = False
+        for item in game.items_byloc[loc]:
+            if item.attr['_type'] == 'block':
+                self.is_activated = False
+
+    def _get_display_symbol(self):
+        if self.isactivated:
+            return (' p ', _colors[self.color % 8], 'on_red', None)
+        else:
+            return (' P ', _colors[self.color % 8], 'on_white', ['bold'])
+
+
+class PressurePlateActivatedKey(PickableKey):
+    def __init__(self, attr, color=0):
+        super(PickableKey, self).__init__(attr)
+        self.attr['_type'] = 'pressure_plate_activated_pickable_key'
+        self.attr['@type'] = 'pressure_plate_activated_pickable_key'
+        self.color = color
+        self.attr['@key'] = 'key' + str(color)
+
+    def toggle(self, agent):
+        # use different vocab to distinguish a picked key from a overlapping key
+        agent.attr['@picked_key'] = 'picked_key' + str(self.color)
+        #agent.game.remove_item(self)
+
+    def _get_display_symbol(self):
+        return (u'   ', _colors[self.color % 8], 'on_yellow', None)
+
+
 
 def add_corners(game):
     attr = {'_type': 'corner', '_immaterial': True, 'corner': 0}

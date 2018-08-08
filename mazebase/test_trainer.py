@@ -120,7 +120,7 @@ if args.optimizer == 'rmsprop':
     optimizer = optim.RMSprop(torch.nn.ModuleList([policy_net, value_net]).parameters(),
             lr = args.lrate, alpha=0.97, eps=1e-6)
 elif args.optimizer == 'adam':
-    optimizer = optim.Adam(list(policy_net.parameters()), lr = args.lrate)
+    optimizer = optim.Adam(torch.nn.ModuleList([policy_net, value_net]).parameters(), lr = args.lrate)
 
 
 if args.nthreads > 1:

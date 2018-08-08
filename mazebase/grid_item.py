@@ -291,6 +291,7 @@ class BlockActivatedPressurePlate(GridItem):
         self.attr['@type'] = 'block_activated_pressure_plate'
         self.attr['@color'] = 'color' + str(color)
         self.attr['_reachable'] = True
+        self.attr['activated'] = False
         self.color = color
         self.is_activated = False
 
@@ -314,16 +315,25 @@ class PressurePlateActivatedKey(PickableKey):
         super(PickableKey, self).__init__(attr)
         self.attr['_type'] = 'pressure_plate_activated_pickable_key'
         self.attr['@type'] = 'pressure_plate_activated_pickable_key'
-        self.color = color
         self.attr['@key'] = 'key' + str(color)
 
     def toggle(self, agent):
-        # use different vocab to distinguish a picked key from a overlapping key
-        agent.attr['@picked_key'] = 'picked_key' + str(self.color)
-        #agent.game.remove_item(self)
+        '''Key is pickable if and only if there is 1 plate activated.
+           The color of the key corresponds to the color of the plate.
+        '''
+        color = -1
+        num_activated = 0
+        for plate in game.items_bytype['block_activated_pressure_plate']:
+            if plate.is_activated:
+                num_activated += 1
+                color = plate.color
+        if num_activated == 1:
+            # use different vocab to distinguish a picked key from a overlapping key
+            agent.attr['@picked_key'] = 'picked_key' + str(color)
+            #agent.game.remove_item(self)
 
     def _get_display_symbol(self):
-        return (u'   ', _colors[self.color % 8], 'on_yellow', None)
+        return (u' Y ', None, 'on_yellow', None)
 
 
 

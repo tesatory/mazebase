@@ -185,6 +185,12 @@ class PushableBlock(GridItem):
         self.attr['_pushable'] = True
         self.attr['_reachable'] = False
 
+    def get_push_location(self, target_loc):
+        block_loc = self.attr['loc']
+        loc = (block_loc[0] + block_loc[0] - target_loc[0],
+               block_loc[1] + block_loc[1] - target_loc[1])
+        return loc
+
     def _get_display_symbol(self):
         return (u'   ', None, 'on_yellow', None)
 
@@ -280,9 +286,9 @@ class PickableKeyOpenedDoor(GridItem):
     def _get_display_symbol(self):
         #        c = "\x1b[1;%dm" % (30 + self.color%8) + '0' + "\x1b[0m"
         if self.isopen:
-            return ('   ', None, None, None)
+            return (' D ', None, None, None)
         else:
-            return (' k ', _colors[self.key % 8], 'on_white', ['bold'])
+            return (' d ', _colors[self.key % 8], 'on_white', ['bold'])
 
 class BlockActivatedPressurePlate(GridItem):
     def __init__(self, attr, color=0):
@@ -299,15 +305,15 @@ class BlockActivatedPressurePlate(GridItem):
         # update is called after added to game (loc is set)
         myloc = self.attr['loc']
         self.is_activated = False
-        for item in game.items_byloc[loc]:
-            if item.attr['_type'] == 'block':
-                self.is_activated = False
+        for item in game.items_byloc[myloc]:
+            if item.attr['_type'] == 'pushable_block':
+                self.is_activated = True
 
     def _get_display_symbol(self):
-        if self.isactivated:
-            return (' p ', _colors[self.color % 8], 'on_red', None)
+        if self.is_activated:
+            return (' P ', _colors[self.color % 8], 'on_red', None)
         else:
-            return (' P ', _colors[self.color % 8], 'on_white', ['bold'])
+            return (' p ', _colors[self.color % 8], 'on_white', ['bold'])
 
 
 class PressurePlateActivatedKey(PickableKey):
@@ -316,24 +322,39 @@ class PressurePlateActivatedKey(PickableKey):
         self.attr['_type'] = 'pressure_plate_activated_pickable_key'
         self.attr['@type'] = 'pressure_plate_activated_pickable_key'
         self.attr['@key'] = 'key' + str(color)
+        self.attr['_reachable'] = True
+        self.color = color
+        self.attr['activated'] = False
 
-    def toggle(self, agent):
-        '''Key is pickable if and only if there is 1 plate activated.
-           The color of the key corresponds to the color of the plate.
-        '''
+    def update(self, game):
+        # update is called after added to game (loc is set)
         color = -1
         num_activated = 0
+        self.attr['activated'] = False
+        agent = game.agent
         for plate in game.items_bytype['block_activated_pressure_plate']:
             if plate.is_activated:
                 num_activated += 1
                 color = plate.color
         if num_activated == 1:
-            # use different vocab to distinguish a picked key from a overlapping key
-            agent.attr['@picked_key'] = 'picked_key' + str(color)
+            self.attr['activated'] = True
+            self.color = color
+
+
+    def toggle(self, agent):
+        '''Key is pickable if and only if there is 1 plate activated.
+           The color of the key corresponds to the color of the plate.
+        '''
+        if self.attr['activated']:
+            # use different vocab to distinguish a picked key from an overlapping key
+            agent.attr['@picked_key'] = 'picked_key' + str(self.color)
             #agent.game.remove_item(self)
 
     def _get_display_symbol(self):
-        return (u' Y ', None, 'on_yellow', None)
+        if not self.attr['activated']:
+            return (u' y ', None, 'on_yellow', None)
+        else:
+            return (u' Y ', _colors[self.color % 8], 'on_yellow', ['bold'])
 
 
 

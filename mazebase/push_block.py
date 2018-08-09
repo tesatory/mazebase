@@ -68,8 +68,7 @@ class Game(gg.GridGame2D):
             path = dut.collect_path(p, self.goal_loc)
             path = path[1:]
             for loc in path:
-                #TODO put get_push_location into pushable_block object
-                pl = self.get_push_location(b.attr['loc'], loc)
+                pl = b.get_push_location(loc)
                 p, cost = dut.dijkstra_touch_cost(self, self.agent.attr['loc'], pl)
                 if cost < dut.get_big_cost():
                     path_to_push = dut.collect_path(p, pl)
@@ -93,13 +92,13 @@ class Game(gg.GridGame2D):
                 states.append(featurizer.featurize(self))
                 self.act(a)
                 self.update()
-            
+
         return list(zip(states, actions))
 
 class Factory(gf.GameFactory):
     def __init__(self, game_name, opts, Game):
         super(Factory, self).__init__(game_name, opts, Game)
-        ro = ('map_width', 'map_height', 'step_cost', 'water_cost', 'nblocks', 
+        ro = ('map_width', 'map_height', 'step_cost', 'water_cost', 'nblocks',
               'nwater')
         self.games[game_name]['required_opts'] = ro
 
@@ -110,7 +109,6 @@ class Factory(gf.GameFactory):
         vocab.append('switch')
         vocab.append('pushable_block')
         vocab.append('cycle_switch')
-        vocab.append('switch')
         vocab.append('block')
         vocab.append('water')
         vocab.append('agent')

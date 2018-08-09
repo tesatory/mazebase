@@ -178,7 +178,7 @@ class GridGame2D(object):
         width = self.mapsize[0]
         height = self.mapsize[1]
         ''' Displays the game map for visualization '''
-        if 'info' in self.items_bytype: 
+        if 'info' in self.items_bytype:
             for i in self.items_bytype['info']:
                 words = {k: v for k, v in i.attr.items() if type(v) == int}
                 swords = sorted(words, key=words.get)

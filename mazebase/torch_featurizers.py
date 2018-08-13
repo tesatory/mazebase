@@ -146,7 +146,6 @@ class ObjFeaturizer(SentenceFeaturizer):
         out = torch.stack(attrs)
         #print('num items: ', len(S))
         #print('len vocab: ', len(self.vocab))
-        #print(out)
         return out
 
     def featurize(self, game):

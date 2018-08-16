@@ -55,8 +55,10 @@ class SentenceFeaturizer(object):
                 continue
             elif i[0] != '_':
                 if i[0] != '@':
+                    # binary attr
                     s.append(i)
                 else:
+                    # categorial
                     s.append(item.attr[i])
         if self.opts.get('separate_loc'):
             return (s, item_loc)

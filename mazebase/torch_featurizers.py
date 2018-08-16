@@ -122,9 +122,17 @@ class ObjFeaturizer(SentenceFeaturizer):
         opts['separate_loc'] = True
         super(ObjFeaturizer, self).__init__(opts, dictionary = dictionary)
         self.vocab = self.dictionary['vocab']
-        self.attr_dim = len(self.vocab) + 3    # +3 for including loc attr and reachability
+
+        self.max_width = opts['max_map_sizes'][0]
+        self.max_height = opts['max_map_sizes'][1]
+        self.attr_dim = len(self.vocab) + 1 + self.max_width + self.max_height   # for including loc attr and reachability
 
     def to_tensor(self, game, agent = None):
+        ''' Tensor where each row corresponds to an object.
+        The first len(self.vocab) dimensions are vocabs;
+        The next self.max_width + self.max_height dimensions are locations;
+        The last attr is reachability.
+        '''
         #print('vocab: ', self.vocab)
         S = self.to_sentence(game, agent = agent)
 
@@ -135,10 +143,10 @@ class ObjFeaturizer(SentenceFeaturizer):
             attr_item = torch.zeros(self.attr_dim)
             #print(item, game.items[item_idx].attr['_type'])
             # attr_item: x, y coordinates; other attributes, reachability
-            attr_item[0] = loc[0]
-            attr_item[1] = loc[1]
+            attr_item[len(self.vocab) + loc[0]] = 1
+            attr_item[len(self.vocab) + self.max_width + loc[1]] = 1
             for w in item:
-                attr_item[self.vocab[w] + 2] = 1
+                attr_item[self.vocab[w]] = 1
             if game.items[item_idx].is_reachable():
                 attr_item[-1] = 1
             attrs.append(attr_item)

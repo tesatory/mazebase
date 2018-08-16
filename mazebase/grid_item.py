@@ -258,7 +258,7 @@ class PickableKey(PickableItem):
     def toggle(self, agent):
         # use different vocab to distinguish a picked key from a overlapping key
         agent.attr['@picked_key'] = 'picked_key' + str(self.key)
-        agent.game.remove_item(self)
+        #agent.game.remove_item(self)
 
     def _get_display_symbol(self):
         return (u' k ', None, _on_colors[self.key % 8], None)
@@ -339,6 +339,7 @@ class PressurePlateActivatedKey(PickableKey):
         if num_activated == 1:
             self.attr['activated'] = True
             self.color = color
+            self.attr['@key'] = 'key' + str(color)
 
 
     def toggle(self, agent):

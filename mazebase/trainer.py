@@ -44,12 +44,12 @@ class Trainer:
         self.runner = runner
         self.optimizer = optimizer
         self.batchifier = batchifier
-        self.LogField = namedtuple('LogField', ('data', 'plot', 'x_axis'))
+        self.LogField = namedtuple('LogField', ('data', 'plot', 'x_axis', 'legend'))
         log = dict()
-        log['#batch'] = self.LogField(list(), False, '')
-        log['reward'] = self.LogField(list(), True, '#batch')
-        log['succ_rate'] = self.LogField(list(), True, '#batch')
-        log['avg_steps'] = self.LogField(list(), True, '#batch')
+        log['#batch'] = self.LogField(list(), False, '', None)
+        log['reward'] = self.LogField(list(), True, '#batch', None)
+        log['succ_rate'] = self.LogField(list(), True, '#batch', None)
+        log['avg_steps'] = self.LogField(list(), True, '#batch', None)
         self.log = log
         if args.plot:
             self.vis = visdom.Visdom(env=args.plot_env, port=args.plot_port)

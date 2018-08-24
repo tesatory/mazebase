@@ -41,13 +41,13 @@ class DataBuilder:
         training_data = self.data[:val_start]
         self.train_dataset_loader = torch.utils.data.DataLoader(
                     self.sampler(training_data, self.factory),
-                    batch_size=self.args.batch_size,
+                    batch_size=self.batchsize,
                     shuffle=True,
                     num_workers=self.args.num_workers)
         test_data = self.data[val_start:]
         self.test_dataset_loader = torch.utils.data.DataLoader(
                     self.sampler(test_data, self.factory),
-                    batch_size=self.args.batch_size,
+                    batch_size=self.batchsize,
                     shuffle=True,
                     num_workers=self.args.num_workers)
 

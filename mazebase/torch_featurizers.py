@@ -143,10 +143,10 @@ class ObjFeaturizer(SentenceFeaturizer):
             attr_item = torch.zeros(self.attr_dim)
             #print(item, game.items[item_idx].attr['_type'])
             # attr_item: x, y coordinates; other attributes, reachability
-            attr_item[len(self.vocab) + loc[0]] = 1
-            attr_item[len(self.vocab) + self.max_width + loc[1]] = 1
             for w in item:
                 attr_item[self.vocab[w]] = 1
+            attr_item[len(self.vocab) + loc[0]] = 1
+            attr_item[len(self.vocab) + self.max_width + loc[1]] = 1
             if game.items[item_idx].is_reachable():
                 attr_item[-1] = 1
             attrs.append(attr_item)

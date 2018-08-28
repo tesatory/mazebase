@@ -55,7 +55,7 @@ class SentenceFeaturizer(object):
                 continue
             elif i[0] != '_':
                 if i[0] != '@':
-                    # binary attr
+                    # flag
                     s.append(i)
                 else:
                     # categorial

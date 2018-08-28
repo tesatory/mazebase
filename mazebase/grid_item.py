@@ -297,7 +297,6 @@ class BlockActivatedPressurePlate(GridItem):
         self.attr['@type'] = 'block_activated_pressure_plate'
         self.attr['@color'] = 'color' + str(color)
         self.attr['_reachable'] = True
-        self.attr['activated'] = False
         self.color = color
         self.is_activated = False
 
@@ -308,6 +307,10 @@ class BlockActivatedPressurePlate(GridItem):
         for item in game.items_byloc[myloc]:
             if item.attr['_type'] == 'pushable_block':
                 self.is_activated = True
+        if self.is_activated:
+            self.attr['activated'] = True
+        elif 'activated' in self.attr:
+            del self.attr['activated']
 
     def _get_display_symbol(self):
         if self.is_activated:
@@ -324,13 +327,11 @@ class PressurePlateActivatedKey(PickableKey):
         self.attr['@key'] = 'key' + str(color)
         self.attr['_reachable'] = True
         self.color = color
-        self.attr['activated'] = False
 
     def update(self, game):
         # update is called after added to game (loc is set)
         color = -1
         num_activated = 0
-        self.attr['activated'] = False
         agent = game.agent
         for plate in game.items_bytype['block_activated_pressure_plate']:
             if plate.is_activated:
@@ -340,6 +341,8 @@ class PressurePlateActivatedKey(PickableKey):
             self.attr['activated'] = True
             self.color = color
             self.attr['@key'] = 'key' + str(color)
+        elif 'activated' in self.attr:
+            del self.attr['activated']
 
 
     def toggle(self, agent):
@@ -352,7 +355,7 @@ class PressurePlateActivatedKey(PickableKey):
             #agent.game.remove_item(self)
 
     def _get_display_symbol(self):
-        if not self.attr['activated']:
+        if 'activated' not in self.attr:
             return (u' y ', None, 'on_yellow', None)
         else:
             return (u' Y ', _colors[self.color % 8], 'on_yellow', ['bold'])

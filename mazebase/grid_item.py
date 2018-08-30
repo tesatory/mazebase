@@ -349,7 +349,7 @@ class PressurePlateActivatedKey(PickableKey):
         '''Key is pickable if and only if there is 1 plate activated.
            The color of the key corresponds to the color of the plate.
         '''
-        if self.attr['activated']:
+        if 'activated' in self.attr:
             # use different vocab to distinguish a picked key from an overlapping key
             agent.attr['@picked_key'] = 'picked_key' + str(self.color)
             #agent.game.remove_item(self)

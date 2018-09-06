@@ -75,18 +75,20 @@ class ConvPolicy(Policy):
         return [F.log_softmax(head(x), dim=-1) for head in self.heads]
 
 class ActionValueModel(nn.Module):
-    def __init__(self, args, num_inputs):
+    def __init__(self, args, num_inputs, act=nn.ReLU):
         super(ActionValueModel, self).__init__()
         self.affine1 = nn.Linear(num_inputs, 256)
         self.affine2 = nn.Linear(128, 128)
         self.heads = nn.ModuleList([nn.Linear(128, o) for o in args.naction_heads])
         self.value_head = nn.Linear(128, 1)
 
+        self.act = act()
+
     def forward(self, x):
         batch_size = x.size()[0]
         x = x.view(batch_size, -1)
-        x = F.tanh(self.affine1(x))
-        x = F.tanh(self.affine2(x))
+        x = self.act(self.affine1(x))
+        x = self.act(self.affine2(x))
         v = self.value_head(x)
         return v, [F.log_softmax(head(x), dim=-1) for head in self.heads]
 

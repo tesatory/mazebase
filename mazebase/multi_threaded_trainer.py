@@ -6,7 +6,6 @@ if sys.version_info[0] == 2:
 else:
     import queue as Queue
 
-
 def share_memory(ep):
     for item in ep:
         tp = type(item)

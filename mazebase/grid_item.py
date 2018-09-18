@@ -8,6 +8,7 @@ import random
 import mazebase.distance_utils as dut
 import mazebase.standard_grid_actions as standard_grid_actions
 from mazebase.standard_grid_actions import up
+from mazebase.standard_grid_actions import push_item
 
 _on_colors = []
 _on_colors.append('on_grey')

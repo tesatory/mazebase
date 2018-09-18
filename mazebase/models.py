@@ -37,7 +37,7 @@ class Conv(nn.Module):
     def __init__(self, num_input_channels, num_output_channels, hiddens=[], act=nn.ReLU, kernel_size=3):
         super(Conv, self).__init__()
         self.act = act()
-        padding = (kernel_size - 1) / 2
+        padding = (kernel_size - 1) // 2
         if len(hiddens) == 0:
             self.conv = nn.Conv2d(num_input_channels, num_output_channels, kernel_size, stride=1, padding=padding)
         else:

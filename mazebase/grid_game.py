@@ -27,6 +27,9 @@ class GridGame2D(object):
         self.mapsize = (opts['map_width'], opts['map_height'])
         self.finished = False
         self.agent = None
+        self.task_idx = None
+        self.target_state = None
+        self.target_attr = None
 
 
     def sample_loc(self, fat):

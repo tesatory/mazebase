@@ -103,7 +103,7 @@ class GridFeaturizer(SentenceFeaturizer):
     def to_tensor(self, game, agent = None):
         vocab = self.dictionary['vocab']
         S = self.to_sentence(game, agent = agent)
-        x = torch.zeros(self.W, self.H, self.C)
+        x = np.zeros((self.W, self.H, self.C))
         for item, loc in S:
             for w in item:
                 x[loc[0]][loc[1]][vocab[w]] += 1
@@ -111,6 +111,7 @@ class GridFeaturizer(SentenceFeaturizer):
             for j in range(self.H):
                 # last index: reachability
                 x[i][j][-1] = int(game.is_loc_reachable((i,j)))
+        x = torch.from_numpy(x)
         return x
 
     def featurize(self, game):

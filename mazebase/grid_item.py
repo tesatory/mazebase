@@ -312,12 +312,16 @@ class CycleSwitchOpenedDoor(GridItem):
         self.attr['@color'] = 'color' + str(c)
 
     def update(self, game):
-        self.isopen = True
         self.attr['_reachable'] = True
+        color = game.items_bytype['cycle_switch'][0].color
         for i in game.items_bytype['cycle_switch']:
-            if self.color != i.color:
-                self.isopen = False
+            if color != i.color and not self.isopen:
                 self.attr['_reachable'] = False
+
+    def toggle(self, agent):
+        if self.attr['_reachable']:
+            self.isopen = True
+            self.attr['activated'] = True
 
     def _get_display_symbol(self):
         #        c = "\x1b[1;%dm" % (30 + self.color%8) + '0' + "\x1b[0m"
@@ -375,11 +379,16 @@ class PickableKeyOpenedDoor(GridItem):
     def update(self, game):
         agent = game.items_bytype['agent'][0]
         if agent.attr.get('@picked_key') == 'picked_key' + str(self.key):
-            self.isopen = True
+            #self.isopen = True
             self.attr['_reachable'] = True
-        else:
-            self.isopen = False
-            self.attr['_reachable'] = False
+        #else:
+        #    self.isopen = False
+        #    self.attr['_reachable'] = False
+
+    def toggle(self, agent):
+        if '@picked_key' in agent.attr and agent.attr['@picked_key'] == 'picked_key' + str(self.key):
+            self.isopen = True
+            self.attr['activated'] = True
 
     def _get_display_symbol(self):
         #        c = "\x1b[1;%dm" % (30 + self.color%8) + '0' + "\x1b[0m"
